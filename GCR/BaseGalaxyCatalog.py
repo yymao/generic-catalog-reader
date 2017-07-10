@@ -19,7 +19,7 @@ class BaseGalaxyCatalog(object):
     Abstract base class for all galaxy catalog classes.
     """
     _required_attributes = ('cosmology',)
-    _required_quantities = ('redshift',)
+    _required_quantities = set()
 
     _default_quantity_modifier = None
     _quantity_modifiers = dict()

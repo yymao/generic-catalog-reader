@@ -72,8 +72,13 @@ class BuzzardGalaxyCatalog(BaseGalaxyCatalog):
         native_quantities = {'original_healpixel'}
         for _, dataset in self._iter_native_dataset():
             for k, v in dataset.iteritems():
-                for name in _get_fits_data(v).names:
-                    native_quantities.add((k, name))
+                fields = _get_fits_data(v).dtype.fields
+                for name, (dt, size) in _get_fits_data(v).dtype.fields.items():
+                    if dt.shape:
+                        for i in range(dt.shape[0]):
+                            native_quantities.add((k, name, i))
+                    else:
+                        native_quantities.add((k, name))
             break
         return native_quantities
 
