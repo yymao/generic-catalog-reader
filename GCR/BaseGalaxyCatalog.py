@@ -90,6 +90,22 @@ class BaseGalaxyCatalog(object):
         self._quantity_modifiers[quantity] = modifier
 
 
+    def get_quantity_modifier(self, quantity):
+        """
+        Retrive a quantify modifier.
+
+        Parameters
+        ----------
+        quantity : str
+            name of the derived quantity to add
+
+        Returns
+        -------
+        quantity_modifier
+        """
+        return self._quantity_modifiers.get(quantity, self._default_quantity_modifier)
+
+
     def has_quantities(self, quantities, include_native=True):
         """
         Check if all quantities specified are available in this galaxy catalog
