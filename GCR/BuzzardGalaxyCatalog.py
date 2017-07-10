@@ -26,8 +26,40 @@ class BuzzardGalaxyCatalog(BaseGalaxyCatalog):
         self._pre_filter_quantities = {'original_healpixel'}
 
         self._quantity_modifiers = {
-            'redshift': ('truth', 'Z'),
+            'galaxy_id': ('truth', 'ID'),
+            'redshift_true': ('truth', 'Z'),
+            'ra': ('truth', 'RA'),
+            'dec': ('truth', 'DEC'),
+            'ra_true': ('truth', 'TRA'),
+            'dec_true': ('truth', 'TDEC'),
+            'halo_id': ('truth', 'HALOID'),
+            'is_bcg': (lambda x: x.astype(np.bool), ('truth', 'CENTRAL')),
+            'ellipticity_1': ('truth', 'EPSILON', 0),
+            'ellipticity_2': ('truth', 'EPSILON', 1),
+            'ellipticity_1_true': ('truth', 'TE', 0),
+            'ellipticity_2_true': ('truth', 'TE', 1),
+            'size': ('truth', 'SIZE'),
+            'size_true': ('truth', 'TSIZE'),
+            'shear_1': ('truth', 'GAMMA1'),
+            'shear_2': ('truth', 'GAMMA2'),
+            'convergence': ('truth', 'KAPPA'),
+            'magnification': ('truth', 'MU'),
+            'position_x': ('truth', 'PX'),
+            'position_y': ('truth', 'PY'),
+            'position_z': ('truth', 'PZ'),
+            'velocity_x': ('truth', 'VX'),
+            'velocity_y': ('truth', 'VY'),
+            'velocity_z': ('truth', 'VZ'),
         }
+
+        for i, b in enumerate('grizY'):
+            self._quantity_modifiers['Mag01_true_{}_des'.format(b)] = ('truth', 'AMAG', i)
+            self._quantity_modifiers['Mag01_true_{}_any'.format(b)] = ('truth', 'AMAG', i)
+            self._quantity_modifiers['mag_{}_des'.format(b)] = ('truth', 'OMAG', i)
+            self._quantity_modifiers['mag_{}_any'.format(b)] = ('truth', 'OMAG', i)
+            self._quantity_modifiers['magerr_{}_des'.format(b)] = ('truth', 'OMAGERR', i)
+            self._quantity_modifiers['magerr_{}_any'.format(b)] = ('truth', 'OMAGERR', i)
+
 
         self._catalog_dir = os.path.join(base_catalog_dir, catalog_dir)
         self._catalog_subdirs = ('truth',)
@@ -73,5 +105,7 @@ class BuzzardGalaxyCatalog(BaseGalaxyCatalog):
             data = np.empty(_get_fits_data(fits_data.values()[0]).shape, np.int)
             data.fill(healpix)
             return data
-        return _get_fits_data(fits_data[native_quantity[0]])[native_quantity[1]]
-
+        data =  _get_fits_data(fits_data[native_quantity[0]])[native_quantity[1]]
+        if len(native_quantity) == 3:
+            data = data[:,native_quantity[2]]
+        return data
