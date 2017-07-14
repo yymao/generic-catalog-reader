@@ -29,7 +29,7 @@ class BuzzardGalaxyCatalog(BaseGalaxyCatalog):
                        npix=768,
                        catalog_subdirs=('truth',),
                        filename_template='Chinchilla-0_lensed.{}.fits',
-                       halo_mass_def='vir'
+                       halo_mass_def='vir',
                        **kwargs):
 
         self._pre_filter_quantities = {'original_healpixel'}
