@@ -6,7 +6,7 @@ from .AlphaQGalaxyCatalog import AlphaQGalaxyCatalog
 import yaml
 
 def load_yaml_config(yaml_config_file):
-    with open(filename) as f:
+    with open(yaml_config_file) as f:
         config = yaml.load(f.read())
     return config
 
