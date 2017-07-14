@@ -32,6 +32,7 @@ class BaseGalaxyCatalog(object):
 
 
     def __init__(self, **kwargs):
+        self._init_kwargs = kwargs.copy()
         self._subclass_init(**kwargs)
         self._native_quantities = set(self._generate_native_quantity_list())
 
@@ -50,6 +51,10 @@ class BaseGalaxyCatalog(object):
     def _generate_native_quantity_list(self):
         """ To be implemented by subclass. Must return an iterator"""
         raise NotImplementedError
+
+
+    def get_input_kwargs(self):
+        return self._init_kwargs
 
 
     def list_all_quantities(self, include_native=False):
