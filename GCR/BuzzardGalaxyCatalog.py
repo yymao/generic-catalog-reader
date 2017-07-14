@@ -67,10 +67,11 @@ class BuzzardGalaxyCatalog(BaseGalaxyCatalog):
             'velocity_z': ('truth', 'VZ'),
         }
 
+        _abs_mask_func = lambda x: np.where(x==99.0, np.nan, x + 5 * np.log10(self.cosmology.h))
         _mask_func = lambda x: np.where(x==99.0, np.nan, x)
         for i, b in enumerate('grizY'):
-            self._quantity_modifiers['Mag_true_{}_des_z01'.format(b)] = (_mask_func, ('truth', 'AMAG', i))
-            self._quantity_modifiers['Mag_true_{}_any'.format(b)] = (_mask_func, ('truth', 'AMAG', i))
+            self._quantity_modifiers['Mag_true_{}_des_z01'.format(b)] = (_abs_mask_func, ('truth', 'AMAG', i))
+            self._quantity_modifiers['Mag_true_{}_any'.format(b)] = (_abs_mask_func, ('truth', 'AMAG', i))
             self._quantity_modifiers['mag_{}_des'.format(b)] = (_mask_func, ('truth', 'OMAG', i))
             self._quantity_modifiers['mag_{}_any'.format(b)] = (_mask_func, ('truth', 'OMAG', i))
             self._quantity_modifiers['magerr_{}_des'.format(b)] = (_mask_func, ('truth', 'OMAGERR', i))
