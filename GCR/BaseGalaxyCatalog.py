@@ -9,6 +9,11 @@ import numpy as np
 from numpy.core.records import fromarrays
 import h5py
 
+try:
+    basestring
+except NameError:
+    basestring = str
+
 
 def _dict_to_ndarray(d):
     return fromarrays(d.values(), np.dtype([(str(k), v.dtype) for k, v in d.items()]))
