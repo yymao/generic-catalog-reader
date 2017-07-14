@@ -19,21 +19,22 @@ class AlphaQGalaxyCatalog(BaseGalaxyCatalog):
     def _subclass_init(self, filename, base_catalog_dir=os.curdir, **kwargs):
 
         self._quantity_modifiers = {
-            'ra': None,
-            'dec': None,
+            'ra_true': 'ra',
+            'dec_true': 'dec',
             'redshift_true': 'redshift',
             'shear_1': 'shear1',
             'shear_2': 'shear2',
-            'halo_id': 'hostIndex',
-            'halo_mass': 'hostHaloMass',
-            'is_central': (lambda x, y : x==y, 'hostIndex', 'parentIndex')
+            'subhalo_id': 'hostIndex',
+            'halo_id': 'parentIndex',
+            'subhalo_mass': 'hostHaloMass',
+            'is_central': (lambda x, y : x==y, 'hostIndex', 'parentIndex'),
         }
 
         for band in 'ugriz':
             self._quantity_modifiers['mag_{}_any'.format(band)] = 'magnitude:SDSS_{}:observed'.format(band)
             self._quantity_modifiers['mag_{}_sdss'.format(band)] = 'magnitude:SDSS_{}:observed'.format(band)
-            self._quantity_modifiers['Mag01_true_{}_sdss'.format(band)] = 'magnitude:SDSS_{}:rest'.format(band)
-            self._quantity_modifiers['Mag01_true_{}_any'.format(band)] = 'magnitude:SDSS_{}:rest'.format(band)
+            self._quantity_modifiers['Mag_true_{}_sdss_z0'.format(band)] = 'magnitude:SDSS_{}:rest'.format(band)
+            self._quantity_modifiers['Mag_true_{}_any'.format(band)] = 'magnitude:SDSS_{}:rest'.format(band)
 
         self._file = os.path.join(base_catalog_dir, filename)
 
