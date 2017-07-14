@@ -26,12 +26,14 @@ class AlphaQGalaxyCatalog(BaseGalaxyCatalog):
             'shear_2': 'shear2',
             'halo_id': 'hostIndex',
             'halo_mass': 'hostHaloMass',
+            'is_central': (lambda x, y : x==y, 'hostIndex', 'parentIndex')
         }
 
         for band in 'ugriz':
             self._quantity_modifiers['mag_{}_any'.format(band)] = 'magnitude:SDSS_{}:observed'.format(band)
             self._quantity_modifiers['mag_{}_sdss'.format(band)] = 'magnitude:SDSS_{}:observed'.format(band)
-
+            self._quantity_modifiers['Mag01_true_{}_sdss'.format(band)] = 'magnitude:SDSS_{}:rest'.format(band)
+            self._quantity_modifiers['Mag01_true_{}_any'.format(band)] = 'magnitude:SDSS_{}:rest'.format(band)
 
         self._file = os.path.join(base_catalog_dir, filename)
 

@@ -46,7 +46,7 @@ class BuzzardGalaxyCatalog(BaseGalaxyCatalog):
             'dec_true': ('truth', 'TDEC'),
             'halo_id': ('truth', 'HALOID'),
             'halo_mass': (lambda x: x/self.cosmology.h, ('truth', 'M200')),
-            'is_bcg': (lambda x: x.astype(np.bool), ('truth', 'CENTRAL')),
+            'is_central': (lambda x: x.astype(np.bool), ('truth', 'CENTRAL')),
             'ellipticity_1': ('truth', 'EPSILON', 0),
             'ellipticity_2': ('truth', 'EPSILON', 1),
             'ellipticity_1_true': ('truth', 'TE', 0),
