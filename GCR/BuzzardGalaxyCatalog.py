@@ -21,23 +21,25 @@ class BuzzardGalaxyCatalog(BaseGalaxyCatalog):
     defined by BaseGalaxyCatalog class.
     """
 
-    def _subclass_init(self, 
-                       catalog_dir, 
-                       base_catalog_dir=os.curdir, 
-                       cosmo_h=0.7, 
+    def _subclass_init(self,
+                       catalog_dir,
+                       base_catalog_dir=os.curdir,
+                       cosmo_h=0.7,
                        cosmo_Omega_M0=0.286,
                        npix=768,
                        catalog_subdirs=('truth',),
                        filename_template='Chinchilla-0_lensed.{}.fits',
+                       halo_mass_def='vir'
                        **kwargs):
 
         self._pre_filter_quantities = {'original_healpixel'}
         self.cosmology = FlatLambdaCDM(H0=cosmo_h*100.0, Om0=cosmo_Omega_M0)
+        self._halo_mass_def = halo_mass_def
 
         _c = 299792.458
         self._quantity_modifiers = {
             'galaxy_id': ('truth', 'ID'),
-            'redshift': (lambda zt, x, y, z, vx, vy, vz: zt + (x*vx+y*vy+z*vz)/np.sqrt(x*x+y*y+z*z)/_c, 
+            'redshift': (lambda zt, x, y, z, vx, vy, vz: zt + (x*vx+y*vy+z*vz)/np.sqrt(x*x+y*y+z*z)/_c,
                 ('truth', 'Z'), ('truth', 'PX'), ('truth', 'PY'), ('truth', 'PZ'), ('truth', 'VX'), ('truth', 'VY'), ('truth', 'VZ')),
             'redshift_true': ('truth', 'Z'),
             'ra': ('truth', 'RA'),
@@ -67,8 +69,8 @@ class BuzzardGalaxyCatalog(BaseGalaxyCatalog):
 
         _mask_func = lambda x: np.where(x==99.0, np.nan, x)
         for i, b in enumerate('grizY'):
-            self._quantity_modifiers['Mag01_true_{}_des'.format(b)] = (_mask_func, ('truth', 'AMAG', i))
-            self._quantity_modifiers['Mag01_true_{}_any'.format(b)] = (_mask_func, ('truth', 'AMAG', i))
+            self._quantity_modifiers['Mag_true_{}_des_z01'.format(b)] = (_mask_func, ('truth', 'AMAG', i))
+            self._quantity_modifiers['Mag_true_{}_any'.format(b)] = (_mask_func, ('truth', 'AMAG', i))
             self._quantity_modifiers['mag_{}_des'.format(b)] = (_mask_func, ('truth', 'OMAG', i))
             self._quantity_modifiers['mag_{}_any'.format(b)] = (_mask_func, ('truth', 'OMAG', i))
             self._quantity_modifiers['magerr_{}_des'.format(b)] = (_mask_func, ('truth', 'OMAGERR', i))
