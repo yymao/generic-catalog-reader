@@ -12,4 +12,4 @@ def load_yaml_config(yaml_config_file):
 
 def load_catalog(yaml_config_file):
     config = load_yaml_config(yaml_config_file)
-    return locals()[config['subclass_name']](**config)
+    return globals()[config['subclass_name']](**config)
