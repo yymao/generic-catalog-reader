@@ -19,15 +19,16 @@ class AlphaQGalaxyCatalog(BaseGalaxyCatalog):
     def _subclass_init(self, filename, base_catalog_dir=os.curdir, **kwargs):
 
         self._quantity_modifiers = {
-            'ra_true': 'ra',
-            'dec_true': 'dec',
+            'ra_true': (lambda x: x/3600.0, 'ra'),
+            'dec_true': (lambda x: x/3600.0, 'dec'),
             'redshift_true': 'redshift',
             'shear_1': 'shear1',
             'shear_2': 'shear2',
-            'subhalo_id': 'hostIndex',
-            'halo_id': 'parentIndex',
+            'convergence': 'k0',
+            'magnification': 'm0',
+            'halo_id': 'hostIndex',
             'subhalo_mass': 'hostHaloMass',
-            'is_central': (lambda x, y : x==y, 'hostIndex', 'parentIndex'),
+            'is_central': (lambda x : x==1, 'nodeIsIsolated'),
         }
 
         for band in 'ugriz':
