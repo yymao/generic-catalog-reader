@@ -314,6 +314,10 @@ class BaseGalaxyCatalog(object):
         return _dict_to_ndarray(d) if return_ndarray else d
 
 
+    def __getitem__(self, key):
+        return self.get_quantities([key])[key]
+
+
     def _subclass_init(self, **kwargs):
         """ To be implemented by subclass. """
         raise NotImplementedError
