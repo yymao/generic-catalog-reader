@@ -81,6 +81,22 @@ class BuzzardGalaxyCatalog(BaseGalaxyCatalog):
         self._catalog_subdirs = catalog_subdirs
         self._npix = npix
         self._filename_template = filename_template
+        self._healpixel_list = list(range(self._npix))
+
+
+    def set_healpixel_list(self, healpixel_list=None):
+        """
+        Set the list of healpixels used by the reader.
+
+        Parameters
+        ----------
+        healpixel_list : list, optional
+            if None, reset the healpixel list
+        """
+        if not healpixel_list:
+            self._healpixel_list = list(range(self._npix))
+        else:
+            self._healpixel_list = list(healpixel_list)
 
 
     def _generate_native_quantity_list(self):
@@ -99,7 +115,7 @@ class BuzzardGalaxyCatalog(BaseGalaxyCatalog):
 
 
     def _iter_native_dataset(self, pre_filters=None):
-        for i in range(self._npix):
+        for i in self._healpixel_list:
             if pre_filters and not all(f[0](*([i]*(len(f)-1))) for f in pre_filters):
                 continue
 
