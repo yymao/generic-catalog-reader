@@ -2,7 +2,7 @@
 
 by [Yao-Yuan Mao](https://yymao.github.io)
 
-**Warming!** We are still finalizing the API and [schema](https://docs.google.com/document/d/1rUsImkBkjjw82Xa_-3a8VMV6K9aYJ8mXioaRhz0JoqI/edit#) for the GCR, so please expect possible future changes. (But it also means that if you have suggestions regarding the API or schema, you can still voice them!) 
+**Warning!** We are still finalizing the API and [schema](https://docs.google.com/document/d/1rUsImkBkjjw82Xa_-3a8VMV6K9aYJ8mXioaRhz0JoqI/edit#) for the GCR, so please expect possible future changes. (But it also means that if you have suggestions regarding the API or schema, you can still voice them!) 
 
 Examples of using the GCR API can be found [here](https://github.com/LSSTDESC/generic-catalog-reader/tree/master/examples). (Thanks Joe for providing the CLF test!)
 
