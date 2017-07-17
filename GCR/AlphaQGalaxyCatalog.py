@@ -27,8 +27,8 @@ class AlphaQGalaxyCatalog(BaseGalaxyCatalog):
             'convergence': 'k0',
             'magnification': 'm0',
             'halo_id': 'hostIndex',
-            'subhalo_mass': 'hostHaloMass',
-            'is_central': (lambda x : x==1, 'nodeIsIsolated'),
+            'halo_mass': 'hostHaloMass',
+            'is_central': (lambda x : x.astype(np.bool), 'nodeIsIsolated'),
         }
 
         for band in 'ugriz':
