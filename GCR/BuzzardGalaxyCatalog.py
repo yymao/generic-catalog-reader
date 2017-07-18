@@ -22,12 +22,12 @@ class BuzzardGalaxyCatalog(BaseGalaxyCatalog):
     """
 
     def _subclass_init(self,
-                       catalog_dir,
                        base_catalog_dir=os.curdir,
+                       catalog_main_dir=os.curdir,
+                       catalog_sub_dirs={'truth':'truth'},
                        cosmo_h=0.7,
                        cosmo_Omega_M0=0.286,
                        npix=768,
-                       catalog_subdirs=('truth',),
                        filename_template='Chinchilla-0_lensed.{}.fits',
                        halo_mass_def='vir',
                        **kwargs):
@@ -77,8 +77,7 @@ class BuzzardGalaxyCatalog(BaseGalaxyCatalog):
             self._quantity_modifiers['magerr_{}_des'.format(b)] = (_mask_func, ('truth', 'OMAGERR', i))
             self._quantity_modifiers['magerr_{}_any'.format(b)] = (_mask_func, ('truth', 'OMAGERR', i))
 
-        self._catalog_dir = os.path.join(base_catalog_dir, catalog_dir)
-        self._catalog_subdirs = catalog_subdirs
+        self._catalog_sub_dirs = {k: os.path.join(base_catalog_dir, catalog_main_dir, v) for k, v in catalog_sub_dirs.items()}
         self._npix = npix
         self._filename_template = filename_template
         self._healpixel_list = list(range(self._npix))
@@ -120,14 +119,13 @@ class BuzzardGalaxyCatalog(BaseGalaxyCatalog):
                 continue
 
             fp = dict()
-            for subdir in self._catalog_subdirs:
-                fname = os.path.join(self._catalog_dir, subdir, self._filename_template.format(i))
+            for key, path in self._catalog_sub_dirs.items():
                 try:
-                    fp[subdir] = fits.open(fname)
+                    fp[key] = fits.open(os.path.join(path, self._filename_template.format(i)))
                 except (IOError, OSError):
                     pass
             try:
-                if all(subdir in fp for subdir in self._catalog_subdirs):
+                if all(k in fp for k in self._catalog_sub_dirs):
                     yield i, fp
             finally:
                 for f in fp.values():
