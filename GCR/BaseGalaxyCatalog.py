@@ -23,8 +23,9 @@ class BaseGalaxyCatalog(object):
     """
     Abstract base class for all galaxy catalog classes.
     """
-    _required_attributes = ('cosmology',)
+    _required_attributes = set()
     _required_quantities = set()
+    _check_native_quantities_in_modifiers = False
 
     _default_quantity_modifier = None
     _quantity_modifiers = dict()
@@ -44,7 +45,9 @@ class BaseGalaxyCatalog(object):
         if not self.has_quantities(self._required_quantities):
             raise ValueError("GalaxyCatalog must have the following quantities: {0}".format(self._required_quantities))
 
-        if not all(q in self._native_quantities for q in self._translate_quantities(self.list_all_quantities(True))):
+        # to check if all native quantities in the modifiers are present
+        if self._check_native_quantities_in_modifiers and \
+                not all(q in self._native_quantities for q in self._translate_quantities(self.list_all_quantities(True))):
             raise ValueError('the reader specifies quantities that are not in the catalog')
 
 
@@ -107,7 +110,7 @@ class BaseGalaxyCatalog(object):
         Parameters
         ----------
         quantity : str
-            name of the derived quantity to add
+            name of the derived quantity to get
 
         Returns
         -------
@@ -115,7 +118,20 @@ class BaseGalaxyCatalog(object):
         """
         return self._quantity_modifiers.get(quantity, self._default_quantity_modifier)
 
+    
+    def del_quantity_modifier(self, quantity):
+        """
+        Delete a quantify modifier.
 
+        Parameters
+        ----------
+        quantity : str
+            name of the derived quantity to delete
+        """
+        if quantity in self._quantity_modifiers:
+            del self._quantity_modifiers[quantity]
+    
+    
     def has_quantities(self, quantities, include_native=True):
         """
         Check if all quantities specified are available in this galaxy catalog
