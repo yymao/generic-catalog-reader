@@ -4,6 +4,7 @@ Contains the base class for galaxy catalog (BaseGalaxyCatalog).
 __all__ = ['BaseGalaxyCatalog']
 
 
+import warnings
 from collections import defaultdict
 import numpy as np
 from numpy.core.records import fromarrays
@@ -25,7 +26,6 @@ class BaseGalaxyCatalog(object):
     """
     _required_attributes = set()
     _required_quantities = set()
-    _check_native_quantities_in_modifiers = False
 
     _default_quantity_modifier = None
     _quantity_modifiers = dict()
@@ -46,9 +46,7 @@ class BaseGalaxyCatalog(object):
             raise ValueError("GalaxyCatalog must have the following quantities: {0}".format(self._required_quantities))
 
         # to check if all native quantities in the modifiers are present
-        if self._check_native_quantities_in_modifiers and \
-                not all(q in self._native_quantities for q in self._translate_quantities(self.list_all_quantities(True))):
-            raise ValueError('the reader specifies quantities that are not in the catalog')
+        self._check_quantities_exist(self.list_all_quantities(True), raise_exception=False)
 
 
     def _generate_native_quantity_list(self):
@@ -118,7 +116,7 @@ class BaseGalaxyCatalog(object):
         """
         return self._quantity_modifiers.get(quantity, self._default_quantity_modifier)
 
-    
+
     def del_quantity_modifier(self, quantity):
         """
         Delete a quantify modifier.
@@ -130,8 +128,8 @@ class BaseGalaxyCatalog(object):
         """
         if quantity in self._quantity_modifiers:
             del self._quantity_modifiers[quantity]
-    
-    
+
+
     def has_quantities(self, quantities, include_native=True):
         """
         Check if all quantities specified are available in this galaxy catalog
@@ -157,23 +155,44 @@ class BaseGalaxyCatalog(object):
             return all(q in self._quantity_modifiers for q in quantities)
 
 
-    def _translate_quantity(self, quantity_requested):
+    def _translate_quantity(self, quantity_requested, native_quantities_needed=None):
+        if native_quantities_needed is None:
+            native_quantities_needed = defaultdict(list)
+
         modifier = self._quantity_modifiers.get(quantity_requested, self._default_quantity_modifier)
 
         if modifier is None or callable(modifier):
-            return {quantity_requested}
+            return native_quantities_needed[quantity_requested].append(quantity_requested)
 
         elif isinstance(modifier, (tuple, list)) and len(modifier) > 1 and callable(modifier[0]):
-            return set(modifier[1:])
+            for native_quantity in modifier[1:]:
+                native_quantities_needed[native_quantity].append(quantity_requested)
 
-        return {modifier}
+        else:
+            native_quantities_needed[modifier].append(quantity_requested)
+
+        return native_quantities_needed
 
 
     def _translate_quantities(self, quantities_requested):
-        native_quantities = set()
+        native_quantities_needed = defaultdict(list)
+
         for q in quantities_requested:
-            native_quantities.update(self._translate_quantity(q))
-        return native_quantities
+            self._translate_quantity(q, native_quantities_needed)
+
+        return native_quantities_needed
+
+
+    def _check_quantities_exist(self, quantities_requested, raise_exception=False):
+        for native_quantity, quantities in self._translate_quantities(quantities_requested).items():
+            if native_quantity not in self._native_quantities:
+                msg = 'Native quantity `{}` does not exist (required by `{}`)'.format(native_quantity, '`, `'.join(quantities))
+                if raise_exception:
+                    raise ValueError(msg)
+                else:
+                    warnings.warn(msg)
+                    return False
+        return True
 
 
     def _assemble_quantity(self, quantity_requested, native_quantities_loaded):
@@ -221,8 +240,7 @@ class BaseGalaxyCatalog(object):
         if not quantities:
             raise ValueError('You must set `quantities`.')
 
-        if not all(q in self._native_quantities for q in self._translate_quantities(quantities)):
-            raise ValueError('Some quantities are not available in this catalog')
+        self._check_quantities_exist(quantities, raise_exception=True)
 
         return quantities
 
@@ -234,8 +252,7 @@ class BaseGalaxyCatalog(object):
         if not all(isinstance(f, (tuple, list)) and len(f) > 1 and callable(f[0]) and all(isinstance(q, basestring) for q in f[1:]) for f in filters):
             raise ValueError('`filters is not set correctly. Must be None or [(callable, str, str, ...), ...]')
 
-        if not all(q in self._native_quantities for q in self._translate_quantities(self._get_quantities_from_filters(filters))):
-            raise ValueError('Some filters are not available in this catalog')
+        self._check_quantities_exist(self._get_quantities_from_filters(filters), raise_exception=True)
 
         pre_filters = list()
         post_filters = list()
