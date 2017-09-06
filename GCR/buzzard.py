@@ -6,7 +6,8 @@ import os
 import numpy as np
 from astropy.io import fits
 from astropy.cosmology import FlatLambdaCDM
-from . import register_reader, BaseGalaxyCatalog
+from .utils import register_reader
+from .base import BaseGalaxyCatalog
 
 __all__ = ['BuzzardGalaxyCatalog']
 
