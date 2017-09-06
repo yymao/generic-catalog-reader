@@ -337,7 +337,7 @@ class BaseGalaxyCatalog(object):
         if return_hdf5:
             with h5py.File(return_hdf5, 'w') as f:
                 for q in quantities:
-                    f.create_dataset(q, data=self._concatenate_quantities(q, pre_filters, post_filters)[q], chunks=True, compression="gzip", shuffle=True, fletcher32=True)
+                    f.create_dataset(q, data=self._concatenate_quantities({q}, pre_filters, post_filters)[q], chunks=True, compression="gzip", shuffle=True, fletcher32=True)
             return h5py.File(return_hdf5, 'r')
 
         if return_iterator:
