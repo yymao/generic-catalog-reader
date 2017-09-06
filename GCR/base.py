@@ -16,6 +16,10 @@ except NameError:
     basestring = str
 
 
+def _trivial_callable(x):
+    return x
+
+
 def _dict_to_ndarray(d):
     return fromarrays(d.values(), np.dtype([(str(k), v.dtype) for k, v in d.items()]))
 
@@ -115,6 +119,70 @@ class BaseGalaxyCatalog(object):
         quantity_modifier
         """
         return self._quantity_modifiers.get(quantity, self._default_quantity_modifier)
+
+
+    def get_normalized_quantity_modifier(self, quantity):
+        """
+        Retrive a quantify modifier, normalized.
+        This function would also return a tuple, with the first item a callable,
+        and the rest native quantity names
+
+        Parameters
+        ----------
+        quantity : str
+            name of the derived quantity to get
+
+        Returns
+        -------
+        tuple : (callable, quantity1, quantity2...)
+        """
+        modifier = self._quantity_modifiers.get(quantity, self._default_quantity_modifier)
+        if modifier is None:
+            return (_trivial_callable, quantity)
+        elif callable(modifier):
+            return (modifier, quantity)
+        elif isinstance(modifier, (tuple, list)) and len(modifier) > 1 and callable(modifier[0]):
+            return modifier
+        else:
+            return (_trivial_callable, modifier)
+
+
+    def add_modifier_on_derived_quantities(self, new_quantity, func, *quantities):
+        """
+        Add a quantify modifier.
+
+        Parameters
+        ----------
+        new_quantity : str
+            name of the new quantity to add
+
+        func : callable
+
+        quantities : list of str
+            quantities to pass to the callable
+        """
+        if new_quantity in self._quantity_modifiers:
+            raise ValueError('quantity name `{}` already exists'.format(new_quantity))
+
+        functions = []
+        quantities_needed = []
+        quantity_count = []
+        for q in quantities:
+            modifier = self.get_normalized_quantity_modifier(q)
+            functions.append(modifier[0])
+            quantities_needed.extend(modifier[1:])
+            quantity_count.append(len(modifier)-1)
+
+        def new_func(*x):
+            assert len(x) == sum(quantity_count)
+            count_current = 0
+            new_args = []
+            for func_this, count in zip(functions, quantity_count):
+                new_args.append(func_this(*x[count_current:count_current+count]))
+                count_current += count
+            return func(*new_args)
+
+        self._quantity_modifiers[new_quantity] = tuple([new_func] + quantities_needed)
 
 
     def del_quantity_modifier(self, quantity):
