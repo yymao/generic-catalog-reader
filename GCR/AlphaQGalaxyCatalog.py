@@ -6,7 +6,7 @@ import os
 import numpy as np
 import h5py
 from astropy.cosmology import FlatLambdaCDM
-from .BaseGalaxyCatalog import BaseGalaxyCatalog
+from . import register_reader, BaseGalaxyCatalog
 
 __all__ = ['AlphaQGalaxyCatalog']
 
@@ -61,3 +61,6 @@ class AlphaQGalaxyCatalog(BaseGalaxyCatalog):
     @staticmethod
     def _fetch_native_quantity(dataset, native_quantity):
         return dataset[native_quantity].value
+
+# Registers the reader
+register_reader(AlphaQGalaxyCatalog)

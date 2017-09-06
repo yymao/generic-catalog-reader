@@ -6,7 +6,7 @@ import os
 import numpy as np
 from astropy.io import fits
 from astropy.cosmology import FlatLambdaCDM
-from .BaseGalaxyCatalog import BaseGalaxyCatalog
+from . import register_reader, BaseGalaxyCatalog
 
 __all__ = ['BuzzardGalaxyCatalog']
 
@@ -143,3 +143,6 @@ class BuzzardGalaxyCatalog(BaseGalaxyCatalog):
         if len(native_quantity) == 3:
             data = data[:,native_quantity[2]]
         return data
+
+# Registers the reader
+register_reader(BuzzardGalaxyCatalog)

@@ -1,9 +1,22 @@
+import yaml
 from .BaseGalaxyCatalog import BaseGalaxyCatalog
+
+_registered_readers = {}
+
+def register_reader(subclass):
+    """
+    Registers a new galaxy catalog type with the loading utility.
+
+    Parameters
+    ----------
+    subclass: subclass of BaseGalaxyCatalog
+    """
+    assert issubclass(subclass, BaseGalaxyCatalog) , "Provided class is not a subclass of BaseGalaxyCatalog"
+    _registered_readers[subclass.__name__] = subclass
+
 from .GalacticusGalaxyCatalog import GalacticusGalaxyCatalog
 from .BuzzardGalaxyCatalog import BuzzardGalaxyCatalog
 from .AlphaQGalaxyCatalog import AlphaQGalaxyCatalog
-
-import yaml
 
 def _load_yaml_config(yaml_config_file):
     with open(yaml_config_file) as f:
@@ -28,4 +41,4 @@ def load_catalog(yaml_config_file, config_overwrite=None):
     config = _load_yaml_config(yaml_config_file)
     if config_overwrite:
         config.update(config_overwrite)
-    return globals()[config['subclass_name']](**config)
+    return _registered_readers[config['subclass_name']](**config)
