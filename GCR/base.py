@@ -53,11 +53,6 @@ class BaseGalaxyCatalog(object):
         self._check_quantities_exist(self.list_all_quantities(True), raise_exception=False)
 
 
-    def _generate_native_quantity_list(self):
-        """ To be implemented by subclass. Must return an iterator"""
-        raise NotImplementedError
-
-
     def get_input_kwargs(self):
         return self._init_kwargs
 
@@ -421,6 +416,11 @@ class BaseGalaxyCatalog(object):
 
     def _subclass_init(self, **kwargs):
         """ To be implemented by subclass. """
+        raise NotImplementedError
+
+
+    def _generate_native_quantity_list(self):
+        """ To be implemented by subclass. Must return an iterator"""
         raise NotImplementedError
 
 
