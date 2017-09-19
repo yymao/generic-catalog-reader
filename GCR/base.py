@@ -98,6 +98,7 @@ class BaseGalaxyCatalog(object):
         if quantity in self._quantity_modifiers and not overwrite:
             raise ValueError('quantity `{}` already exists'.format(quantity))
         self._quantity_modifiers[quantity] = modifier
+        self._check_quantities_exist([quantity], raise_exception=False)
 
 
     def get_quantity_modifier(self, quantity):
@@ -178,6 +179,7 @@ class BaseGalaxyCatalog(object):
             return func(*new_args)
 
         self._quantity_modifiers[new_quantity] = tuple([new_func] + quantities_needed)
+        self._check_quantities_exist([new_quantity], raise_exception=False)
 
 
     def del_quantity_modifier(self, quantity):
