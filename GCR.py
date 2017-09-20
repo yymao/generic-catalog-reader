@@ -1,14 +1,19 @@
 """
-Contains the base class for galaxy catalog (BaseGalaxyCatalog).
+Contains the base class for a generic catalog (BaseGenericCatalog).
 """
-__all__ = ['BaseGalaxyCatalog']
-
+__all__ = ['BaseGenericCatalog']
+__version__ = '0.2.0'
+__author__ = 'Yao-Yuan Mao'
 
 import warnings
 from collections import defaultdict
 import numpy as np
 from numpy.core.records import fromarrays
-import h5py
+
+try:
+    import h5py
+except ImportError:
+    pass
 
 try:
     basestring
@@ -24,9 +29,9 @@ def _dict_to_ndarray(d):
     return fromarrays(d.values(), np.dtype([(str(k), v.dtype) for k, v in d.items()]))
 
 
-class BaseGalaxyCatalog(object):
+class BaseGenericCatalog(object):
     """
-    Abstract base class for all galaxy catalog classes.
+    Abstract base class for all catalog classes.
     """
     _required_attributes = set()
     _required_quantities = set()
@@ -43,11 +48,11 @@ class BaseGalaxyCatalog(object):
 
         # enforce the existence of required attributes
         if not all(hasattr(self, attr) for attr in self._required_attributes):
-            raise ValueError("Any subclass of GalaxyCatalog must implement following attributes: {0}".format(', '.join(self._required_attributes)))
+            raise ValueError("Any subclass of BaseGenericCatalog must implement following attributes: {0}".format(', '.join(self._required_attributes)))
 
         # enforce the minimal set of quantities
         if not self.has_quantities(self._required_quantities):
-            raise ValueError("GalaxyCatalog must have the following quantities: {0}".format(self._required_quantities))
+            raise ValueError("Catalog must have the following quantities: {0}".format(self._required_quantities))
 
         # to check if all native quantities in the modifiers are present
         self._check_quantities_exist(self.list_all_quantities(True), raise_exception=False)
