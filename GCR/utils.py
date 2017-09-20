@@ -1,9 +1,10 @@
 import yaml
+import requests
 from .base import BaseGalaxyCatalog
 
-__all__ = ['register_reader', 'load_catalog']
+__all__ = ['register_reader', 'load_yaml', 'load_catalog']
 
-_registered_readers = {}
+_registered_readers = dict()
 
 def register_reader(subclass):
     """
@@ -13,13 +14,22 @@ def register_reader(subclass):
     ----------
     subclass: subclass of BaseGalaxyCatalog
     """
-    assert issubclass(subclass, BaseGalaxyCatalog) , "Provided class is not a subclass of BaseGalaxyCatalog"
+    assert issubclass(subclass, BaseGalaxyCatalog), "Provided class is not a subclass of BaseGalaxyCatalog"
     _registered_readers[subclass.__name__] = subclass
 
 
-def _load_yaml_config(yaml_config_file):
-    with open(yaml_config_file) as f:
-        config = yaml.load(f.read())
+def load_yaml(yaml_file):
+    """
+    Load yaml file
+    """
+    try:
+        r = requests.get(yaml_file, stream=True)
+    except requests.exceptions.MissingSchema:
+        with open(yaml_file) as f:
+            config = yaml.load(f)
+    else:
+        r.raw.decode_content = True
+        config = yaml.load(r.raw)
     return config
 
 
@@ -38,7 +48,7 @@ def load_catalog(yaml_config_file, config_overwrite=None):
     ------
     galaxy_catalog : subclass of BaseGalaxyCatalog
     """
-    config = _load_yaml_config(yaml_config_file)
+    config = load_yaml(yaml_config_file)
     if config_overwrite:
         config.update(config_overwrite)
     return _registered_readers[config['subclass_name']](**config)
