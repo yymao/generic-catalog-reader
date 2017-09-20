@@ -30,6 +30,7 @@ class AlphaQGalaxyCatalog(BaseGalaxyCatalog):
             'halo_id': 'hostIndex',
             'halo_mass': 'hostHaloMass',
             'is_central': (lambda x : x.astype(np.bool), 'nodeIsIsolated'),
+            'stellar_mass': 'totalMassStellar',
         }
 
         for band in 'ugriz':
