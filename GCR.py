@@ -1,13 +1,19 @@
 """
-Contains the base class for galaxy catalog (BaseGalaxyCatalog).
+Contains the base class for a generic catalog (BaseGenericCatalog).
 """
-__all__ = ['BaseGalaxyCatalog']
+__all__ = ['BaseGenericCatalog']
+__version__ = '0.2.0'
+__author__ = 'Yao-Yuan Mao'
 
-
+import warnings
 from collections import defaultdict
 import numpy as np
 from numpy.core.records import fromarrays
-import h5py
+
+try:
+    import h5py
+except ImportError:
+    pass
 
 try:
     basestring
@@ -15,15 +21,19 @@ except NameError:
     basestring = str
 
 
+def _trivial_callable(x):
+    return x
+
+
 def _dict_to_ndarray(d):
     return fromarrays(d.values(), np.dtype([(str(k), v.dtype) for k, v in d.items()]))
 
 
-class BaseGalaxyCatalog(object):
+class BaseGenericCatalog(object):
     """
-    Abstract base class for all galaxy catalog classes.
+    Abstract base class for all catalog classes.
     """
-    _required_attributes = ('cosmology',)
+    _required_attributes = set()
     _required_quantities = set()
 
     _default_quantity_modifier = None
@@ -32,24 +42,24 @@ class BaseGalaxyCatalog(object):
 
 
     def __init__(self, **kwargs):
+        self._init_kwargs = kwargs.copy()
         self._subclass_init(**kwargs)
         self._native_quantities = set(self._generate_native_quantity_list())
 
         # enforce the existence of required attributes
         if not all(hasattr(self, attr) for attr in self._required_attributes):
-            raise ValueError("Any subclass of GalaxyCatalog must implement following attributes: {0}".format(', '.join(self._required_attributes)))
+            raise ValueError("Any subclass of BaseGenericCatalog must implement following attributes: {0}".format(', '.join(self._required_attributes)))
 
         # enforce the minimal set of quantities
         if not self.has_quantities(self._required_quantities):
-            raise ValueError("GalaxyCatalog must have the following quantities: {0}".format(self._required_quantities))
+            raise ValueError("Catalog must have the following quantities: {0}".format(self._required_quantities))
 
-        if not all(q in self._native_quantities for q in self._translate_quantities(self.list_all_quantities(True))):
-            raise ValueError('the reader specifies quantities that are not in the catalog')
+        # to check if all native quantities in the modifiers are present
+        self._check_quantities_exist(self.list_all_quantities(True), raise_exception=False)
 
 
-    def _generate_native_quantity_list(self):
-        """ To be implemented by subclass. Must return an iterator"""
-        raise NotImplementedError
+    def get_input_kwargs(self):
+        return self._init_kwargs
 
 
     def list_all_quantities(self, include_native=False):
@@ -93,6 +103,7 @@ class BaseGalaxyCatalog(object):
         if quantity in self._quantity_modifiers and not overwrite:
             raise ValueError('quantity `{}` already exists'.format(quantity))
         self._quantity_modifiers[quantity] = modifier
+        self._check_quantities_exist([quantity], raise_exception=False)
 
 
     def get_quantity_modifier(self, quantity):
@@ -102,13 +113,91 @@ class BaseGalaxyCatalog(object):
         Parameters
         ----------
         quantity : str
-            name of the derived quantity to add
+            name of the derived quantity to get
 
         Returns
         -------
         quantity_modifier
         """
         return self._quantity_modifiers.get(quantity, self._default_quantity_modifier)
+
+
+    def get_normalized_quantity_modifier(self, quantity):
+        """
+        Retrive a quantify modifier, normalized.
+        This function would also return a tuple, with the first item a callable,
+        and the rest native quantity names
+
+        Parameters
+        ----------
+        quantity : str
+            name of the derived quantity to get
+
+        Returns
+        -------
+        tuple : (callable, quantity1, quantity2...)
+        """
+        modifier = self._quantity_modifiers.get(quantity, self._default_quantity_modifier)
+        if modifier is None:
+            return (_trivial_callable, quantity)
+        elif callable(modifier):
+            return (modifier, quantity)
+        elif isinstance(modifier, (tuple, list)) and len(modifier) > 1 and callable(modifier[0]):
+            return modifier
+        else:
+            return (_trivial_callable, modifier)
+
+
+    def add_modifier_on_derived_quantities(self, new_quantity, func, *quantities):
+        """
+        Add a quantify modifier.
+
+        Parameters
+        ----------
+        new_quantity : str
+            name of the new quantity to add
+
+        func : callable
+
+        quantities : list of str
+            quantities to pass to the callable
+        """
+        if new_quantity in self._quantity_modifiers:
+            raise ValueError('quantity name `{}` already exists'.format(new_quantity))
+
+        functions = []
+        quantities_needed = []
+        quantity_count = []
+        for q in quantities:
+            modifier = self.get_normalized_quantity_modifier(q)
+            functions.append(modifier[0])
+            quantities_needed.extend(modifier[1:])
+            quantity_count.append(len(modifier)-1)
+
+        def new_func(*x):
+            assert len(x) == sum(quantity_count)
+            count_current = 0
+            new_args = []
+            for func_this, count in zip(functions, quantity_count):
+                new_args.append(func_this(*x[count_current:count_current+count]))
+                count_current += count
+            return func(*new_args)
+
+        self._quantity_modifiers[new_quantity] = tuple([new_func] + quantities_needed)
+        self._check_quantities_exist([new_quantity], raise_exception=False)
+
+
+    def del_quantity_modifier(self, quantity):
+        """
+        Delete a quantify modifier.
+
+        Parameters
+        ----------
+        quantity : str
+            name of the derived quantity to delete
+        """
+        if quantity in self._quantity_modifiers:
+            del self._quantity_modifiers[quantity]
 
 
     def has_quantities(self, quantities, include_native=True):
@@ -136,23 +225,44 @@ class BaseGalaxyCatalog(object):
             return all(q in self._quantity_modifiers for q in quantities)
 
 
-    def _translate_quantity(self, quantity_requested):
+    def _translate_quantity(self, quantity_requested, native_quantities_needed=None):
+        if native_quantities_needed is None:
+            native_quantities_needed = defaultdict(list)
+
         modifier = self._quantity_modifiers.get(quantity_requested, self._default_quantity_modifier)
 
         if modifier is None or callable(modifier):
-            return {quantity_requested}
+            return native_quantities_needed[quantity_requested].append(quantity_requested)
 
         elif isinstance(modifier, (tuple, list)) and len(modifier) > 1 and callable(modifier[0]):
-            return set(modifier[1:])
+            for native_quantity in modifier[1:]:
+                native_quantities_needed[native_quantity].append(quantity_requested)
 
-        return {modifier}
+        else:
+            native_quantities_needed[modifier].append(quantity_requested)
+
+        return native_quantities_needed
 
 
     def _translate_quantities(self, quantities_requested):
-        native_quantities = set()
+        native_quantities_needed = defaultdict(list)
+
         for q in quantities_requested:
-            native_quantities.update(self._translate_quantity(q))
-        return native_quantities
+            self._translate_quantity(q, native_quantities_needed)
+
+        return native_quantities_needed
+
+
+    def _check_quantities_exist(self, quantities_requested, raise_exception=False):
+        for native_quantity, quantities in self._translate_quantities(quantities_requested).items():
+            if native_quantity not in self._native_quantities:
+                msg = 'Native quantity `{}` does not exist (required by `{}`)'.format(native_quantity, '`, `'.join(quantities))
+                if raise_exception:
+                    raise ValueError(msg)
+                else:
+                    warnings.warn(msg)
+                    return False
+        return True
 
 
     def _assemble_quantity(self, quantity_requested, native_quantities_loaded):
@@ -200,8 +310,7 @@ class BaseGalaxyCatalog(object):
         if not quantities:
             raise ValueError('You must set `quantities`.')
 
-        if not all(q in self._native_quantities for q in self._translate_quantities(quantities)):
-            raise ValueError('Some quantities are not available in this catalog')
+        self._check_quantities_exist(quantities, raise_exception=True)
 
         return quantities
 
@@ -213,8 +322,7 @@ class BaseGalaxyCatalog(object):
         if not all(isinstance(f, (tuple, list)) and len(f) > 1 and callable(f[0]) and all(isinstance(q, basestring) for q in f[1:]) for f in filters):
             raise ValueError('`filters is not set correctly. Must be None or [(callable, str, str, ...), ...]')
 
-        if not all(q in self._native_quantities for q in self._translate_quantities(self._get_quantities_from_filters(filters))):
-            raise ValueError('Some filters are not available in this catalog')
+        self._check_quantities_exist(self._get_quantities_from_filters(filters), raise_exception=True)
 
         pre_filters = list()
         post_filters = list()
@@ -299,7 +407,7 @@ class BaseGalaxyCatalog(object):
         if return_hdf5:
             with h5py.File(return_hdf5, 'w') as f:
                 for q in quantities:
-                    f.create_dataset(q, data=self._concatenate_quantities(q, pre_filters, post_filters)[q], chunks=True, compression="gzip", shuffle=True, fletcher32=True)
+                    f.create_dataset(q, data=self._concatenate_quantities({q}, pre_filters, post_filters)[q], chunks=True, compression="gzip", shuffle=True, fletcher32=True)
             return h5py.File(return_hdf5, 'r')
 
         if return_iterator:
@@ -309,8 +417,17 @@ class BaseGalaxyCatalog(object):
         return _dict_to_ndarray(d) if return_ndarray else d
 
 
+    def __getitem__(self, key):
+        return self.get_quantities([key])[key]
+
+
     def _subclass_init(self, **kwargs):
         """ To be implemented by subclass. """
+        raise NotImplementedError
+
+
+    def _generate_native_quantity_list(self):
+        """ To be implemented by subclass. Must return an iterator"""
         raise NotImplementedError
 
 
