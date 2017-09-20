@@ -11,7 +11,7 @@ from setuptools import setup
 
 setup(
     name='GCR',
-    version='0.1.0',
+    version='0.1.1',
     description='Generic Catalog Reader: A common reader interface for accessing generic (galaxy/halo) catalogs',
     url='https://github.com/LSSTDESC/generic-catalog-reader',
     author='Yao-Yuan Mao',
