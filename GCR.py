@@ -2,7 +2,7 @@
 Contains the base class for a generic catalog (BaseGenericCatalog).
 """
 __all__ = ['BaseGenericCatalog']
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 __author__ = 'Yao-Yuan Mao'
 
 import warnings
@@ -58,8 +58,15 @@ class BaseGenericCatalog(object):
         self._check_quantities_exist(self.list_all_quantities(True), raise_exception=False)
 
 
-    def get_input_kwargs(self):
-        return self._init_kwargs
+    def get_input_kwargs(self, key=None):
+        """
+        Get the input keyword arguments.
+        If *key* is `None`, return the full dict.
+        """
+        if key is None:
+            return self._init_kwargs
+        else:
+            return self._init_kwargs.get(key)
 
 
     def list_all_quantities(self, include_native=False):
@@ -200,9 +207,33 @@ class BaseGenericCatalog(object):
             del self._quantity_modifiers[quantity]
 
 
+    def has_quantity(self, quantity, include_native=True):
+        """
+        Check if *quantity* is available in this galaxy catalog
+
+        Parameters
+        ----------
+        quantity : str
+            a quantity name to check
+
+        include_native : bool, optional
+            whether or not to include native quantity names when checking
+
+        Returns
+        -------
+        has_quantity : bool
+            True if the quantities are all available; otherwise False
+        """
+
+        if include_native:
+            return all(q in self._native_quantities for q in self._translate_quantities({quantity}))
+        else:
+            return quantity in self._quantity_modifiers
+
+
     def has_quantities(self, quantities, include_native=True):
         """
-        Check if all quantities specified are available in this galaxy catalog
+        Check if ALL *quantities* specified are available in this galaxy catalog
 
         Parameters
         ----------
@@ -217,12 +248,23 @@ class BaseGenericCatalog(object):
         has_quantities : bool
             True if the quantities are all available; otherwise False
         """
-        quantities = {quantities} if isinstance(quantities, basestring) else set(quantities)
+        quantities = set(quantities)
 
         if include_native:
             return all(q in self._native_quantities for q in self._translate_quantities(quantities))
         else:
             return all(q in self._quantity_modifiers for q in quantities)
+
+
+    def first_available(self, *quantities):
+        """
+        Return the first available quantity in the input arguments.
+        Raise an error if none of them is available.
+        """
+        for q in quantities:
+            if self.has_quantity(q):
+                return q
+        raise ValueError('None of these quantities exists')
 
 
     def _translate_quantity(self, quantity_requested, native_quantities_needed=None):
