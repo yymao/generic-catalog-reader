@@ -2,7 +2,7 @@
 Contains the base class for a generic catalog (BaseGenericCatalog).
 """
 __all__ = ['BaseGenericCatalog']
-__version__ = '0.2.1'
+__version__ = '0.2.2'
 __author__ = 'Yao-Yuan Mao'
 
 import warnings

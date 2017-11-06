@@ -12,7 +12,7 @@ from setuptools import setup
 
 setup(
     name='GCR',
-    version='0.2.1',
+    version='0.2.2',
     description='Generic Catalog Reader: A common reader interface for accessing generic catalogs',
     url='https://github.com/yymao/generic-catalog-reader',
     download_url = 'https://github.com/yymao/generic-catalog-reader/archive/v0.2.1.zip',
