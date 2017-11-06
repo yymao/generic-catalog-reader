@@ -261,8 +261,10 @@ class BaseGenericCatalog(object):
         Return the first available quantity in the input arguments.
         Raise an error if none of them is available.
         """
-        for q in quantities:
+        for i, q in enumerate(quantities):
             if self.has_quantity(q):
+                if i:
+                    warnings.warn('{} not available; using {} instead'.format(quantities[0], q))
                 return q
         raise ValueError('None of these quantities exists')
 
