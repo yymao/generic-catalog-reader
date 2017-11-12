@@ -1,19 +1,15 @@
 """
 Contains the base class for a generic catalog (BaseGenericCatalog).
 """
-__all__ = ['BaseGenericCatalog']
-__version__ = '0.2.2'
+__all__ = ['BaseGenericCatalog', 'dict_to_numpy_array', 'GCRQuery']
+__version__ = '0.3.0'
 __author__ = 'Yao-Yuan Mao'
 
 import warnings
 from collections import defaultdict
 import numpy as np
 from numpy.core.records import fromarrays
-
-try:
-    import h5py
-except ImportError:
-    pass
+import easyquery
 
 try:
     basestring
@@ -21,11 +17,24 @@ except NameError:
     basestring = str
 
 
+class GCRQuery(easyquery.Query):
+    @staticmethod
+    def _get_table_len(table):
+        return len(next(table.values()))
+
+    @staticmethod
+    def _mask_table(table, mask):
+        return {k: v[mask] for k, v in table.items()}
+
+
 def _trivial_callable(x):
     return x
 
 
-def _dict_to_ndarray(d):
+def dict_to_numpy_array(d):
+    """
+    Convert a dict of 1d array to a numpy recarray
+    """
     return fromarrays(d.values(), np.dtype([(str(k), v.dtype) for k, v in d.items()]))
 
 
@@ -65,8 +74,8 @@ class BaseGenericCatalog(object):
         """
         if key is None:
             return self._init_kwargs
-        else:
-            return self._init_kwargs.get(key)
+
+        return self._init_kwargs.get(key)
 
 
     def list_all_quantities(self, include_native=False):
@@ -147,12 +156,14 @@ class BaseGenericCatalog(object):
         modifier = self._quantity_modifiers.get(quantity, self._default_quantity_modifier)
         if modifier is None:
             return (_trivial_callable, quantity)
-        elif callable(modifier):
+
+        if callable(modifier):
             return (modifier, quantity)
-        elif isinstance(modifier, (tuple, list)) and len(modifier) > 1 and callable(modifier[0]):
+
+        if isinstance(modifier, (tuple, list)) and len(modifier) > 1 and callable(modifier[0]):
             return modifier
-        else:
-            return (_trivial_callable, modifier)
+
+        return (_trivial_callable, modifier)
 
 
     def add_modifier_on_derived_quantities(self, new_quantity, func, *quantities):
@@ -181,7 +192,7 @@ class BaseGenericCatalog(object):
             quantities_needed.extend(modifier[1:])
             quantity_count.append(len(modifier)-1)
 
-        def new_func(*x):
+        def _new_func(*x):
             assert len(x) == sum(quantity_count)
             count_current = 0
             new_args = []
@@ -190,7 +201,7 @@ class BaseGenericCatalog(object):
                 count_current += count
             return func(*new_args)
 
-        self._quantity_modifiers[new_quantity] = tuple([new_func] + quantities_needed)
+        self._quantity_modifiers[new_quantity] = tuple([_new_func] + quantities_needed)
         self._check_quantities_exist([new_quantity], raise_exception=False)
 
 
@@ -227,8 +238,8 @@ class BaseGenericCatalog(object):
 
         if include_native:
             return all(q in self._native_quantities for q in self._translate_quantities({quantity}))
-        else:
-            return quantity in self._quantity_modifiers
+
+        return quantity in self._quantity_modifiers
 
 
     def has_quantities(self, quantities, include_native=True):
@@ -252,8 +263,8 @@ class BaseGenericCatalog(object):
 
         if include_native:
             return all(q in self._native_quantities for q in self._translate_quantities(quantities))
-        else:
-            return all(q in self._quantity_modifiers for q in quantities)
+
+        return all(q in self._quantity_modifiers for q in quantities)
 
 
     def first_available(self, *quantities):
@@ -379,7 +390,7 @@ class BaseGenericCatalog(object):
         return pre_filters if pre_filters else None, post_filters
 
 
-    def _get_quantities_iter(self, quantities, pre_filters, post_filters, return_ndarray=False):
+    def _get_quantities_iter(self, quantities, pre_filters, post_filters):
         for dataset in self._iter_native_dataset(pre_filters):
 
             if pre_filters:
@@ -405,7 +416,7 @@ class BaseGenericCatalog(object):
                 for q in data:
                     data[q] = data[q][mask]
             del mask
-            yield _dict_to_ndarray(data) if return_ndarray else data
+            yield data
             del data
 
 
@@ -417,7 +428,7 @@ class BaseGenericCatalog(object):
         return {q: np.concatenate(requested_data[q]) if requested_data[q] else np.array([]) for q in quantities}
 
 
-    def get_quantities(self, quantities, filters=None, return_ndarray=False, return_hdf5=None, return_iterator=False):
+    def get_quantities(self, quantities, filters=None, return_iterator=False):
         """
         Fetch quantities from this galaxy catalog.
 
@@ -429,36 +440,22 @@ class BaseGenericCatalog(object):
         filters : list of tuple, optional
             filters to apply. Each filter should be in the format of (callable, str, str, ...)
 
-        return_ndarray : bool, optional
-            return an structured ndarray if True. default is False, return a dict object
-            this option is ignored if `return_hdf5` is True
-
-        return_hdf5 : None or str, optional
-            filename to a hdf5 file to store the return data.
-            If `return_hdf5` is set, `return_iterator` is set to False.
-
         return_iterator : bool, optional
             if True, return an iterator that iterates over the native format, default is False
 
         Returns
         -------
-        quantities : dict or h5py.File (when `return_hdf5` is set) or iterator (when `return_iterator` is True)
+        quantities : dict, or iterator of dict (when `return_iterator` is True)
         """
 
         quantities = self._preprocess_requested_quantities(quantities)
         pre_filters, post_filters = self._preprocess_requested_filters(filters)
 
-        if return_hdf5:
-            with h5py.File(return_hdf5, 'w') as f:
-                for q in quantities:
-                    f.create_dataset(q, data=self._concatenate_quantities({q}, pre_filters, post_filters)[q], chunks=True, compression="gzip", shuffle=True, fletcher32=True)
-            return h5py.File(return_hdf5, 'r')
-
         if return_iterator:
-            return self._get_quantities_iter(quantities, pre_filters, post_filters, return_ndarray)
+            return self._get_quantities_iter(quantities, pre_filters, post_filters)
 
         d = self._concatenate_quantities(quantities, pre_filters, post_filters)
-        return _dict_to_ndarray(d) if return_ndarray else d
+        return d
 
 
     def __getitem__(self, key):
