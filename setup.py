@@ -12,10 +12,10 @@ from setuptools import setup
 
 setup(
     name='GCR',
-    version='0.3.0',
+    version='0.4.0',
     description='Generic Catalog Reader: A common reader interface for accessing generic catalogs',
     url='https://github.com/yymao/generic-catalog-reader',
-    download_url='https://github.com/yymao/generic-catalog-reader/archive/v0.3.0.zip',
+    download_url='https://github.com/yymao/generic-catalog-reader/archive/v0.4.0.zip',
     author='Yao-Yuan Mao',
     author_email='yymao.astro@gmail.com',
     maintainer='Yao-Yuan Mao',
@@ -30,5 +30,5 @@ setup(
     ],
     keywords='GCR catalog reader',
     py_modules=['GCR'],
-    install_requires=['numpy', 'easyquery'],
+    install_requires=['numpy', 'easyquery>=0.1.3'],
 )
