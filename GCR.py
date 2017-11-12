@@ -2,7 +2,7 @@
 Contains the base class for a generic catalog (BaseGenericCatalog).
 """
 __all__ = ['BaseGenericCatalog', 'dict_to_numpy_array', 'GCRQuery']
-__version__ = '0.3.0'
+__version__ = '0.4.0'
 __author__ = 'Yao-Yuan Mao'
 
 import warnings
@@ -11,10 +11,16 @@ import numpy as np
 from numpy.core.records import fromarrays
 import easyquery
 
-try:
-    basestring
-except NameError:
-    basestring = str
+
+def _is_string_like(obj):
+    """
+    Check whether obj behaves like a string.
+    """
+    try:
+        obj + ''
+    except (TypeError, ValueError):
+        return False
+    return True
 
 
 class GCRQuery(easyquery.Query):
@@ -47,8 +53,7 @@ class BaseGenericCatalog(object):
 
     _default_quantity_modifier = None
     _quantity_modifiers = dict()
-    _pre_filter_quantities = set()
-
+    _native_filter_quantities = set()
 
     def __init__(self, **kwargs):
         self._init_kwargs = kwargs.copy()
@@ -67,15 +72,93 @@ class BaseGenericCatalog(object):
         self._check_quantities_exist(self.list_all_quantities(True), raise_exception=False)
 
 
-    def get_input_kwargs(self, key=None):
+    def get_quantities(self, quantities, filters=None, native_filters=None, return_iterator=False):
         """
-        Get the input keyword arguments.
-        If *key* is `None`, return the full dict.
-        """
-        if key is None:
-            return self._init_kwargs
+        Fetch quantities from this galaxy catalog.
 
-        return self._init_kwargs.get(key)
+        Parameters
+        ----------
+        quantities : str or list of str or tuple of str
+            quantities to fetch
+
+        filters : list of tuple, or GCRQuery instance, optional
+            filters to apply. Each filter should be in the format of (callable, str, str, ...)
+
+        native_filters : list of tuple, optional
+            Native filters to apply. Each filter should be in the format of (callable, str, str, ...)
+
+        return_iterator : bool, optional
+            if True, return an iterator that iterates over the native format, default is False
+
+        Returns
+        -------
+        quantities : dict, or iterator of dict (when `return_iterator` is True)
+        """
+
+        quantities = self._preprocess_requested_quantities(quantities)
+        filters = self._preprocess_filters(filters)
+        if native_filters:
+            self._check_native_filters(native_filters)
+
+        it = self._get_quantities_iter(quantities, filters, native_filters)
+
+        if return_iterator:
+            return it
+
+        data_all = defaultdict(list)
+        for data in it:
+            for q in quantities:
+                data_all[q].append(data[q])
+        return {q: (np.concatenate(data_all[q]) if len(data_all[q]) > 1 else data_all[q][0]) for q in quantities}
+
+
+    def has_quantity(self, quantity, include_native=True):
+        """
+        Check if *quantity* is available in this galaxy catalog
+
+        Parameters
+        ----------
+        quantity : str
+            a quantity name to check
+
+        include_native : bool, optional
+            whether or not to include native quantity names when checking
+
+        Returns
+        -------
+        has_quantity : bool
+            True if the quantities are all available; otherwise False
+        """
+
+        if include_native:
+            return all(q in self._native_quantities for q in self._translate_quantities({quantity}))
+
+        return quantity in self._quantity_modifiers
+
+
+    def has_quantities(self, quantities, include_native=True):
+        """
+        Check if ALL *quantities* specified are available in this galaxy catalog
+
+        Parameters
+        ----------
+        quantities : iterable
+            a list of quantity names to check
+
+        include_native : bool, optional
+            whether or not to include native quantity names when checking
+
+        Returns
+        -------
+        has_quantities : bool
+            True if the quantities are all available; otherwise False
+        """
+        quantities = set(quantities)
+
+        if include_native:
+            return all(q in self._native_quantities for q in self._translate_quantities(quantities))
+
+        return all(q in self._quantity_modifiers for q in quantities)
 
 
     def list_all_quantities(self, include_native=False):
@@ -95,6 +178,29 @@ class BaseGenericCatalog(object):
         Return a list of all available native quantities in this catalog
         """
         return list(self._native_quantities)
+
+
+    def first_available(self, *quantities):
+        """
+        Return the first available quantity in the input arguments.
+        Return `None` if none of them is available.
+        """
+        for i, q in enumerate(quantities):
+            if self.has_quantity(q):
+                if i:
+                    warnings.warn('{} not available; using {} instead'.format(quantities[0], q))
+                return q
+
+
+    def get_input_kwargs(self, key=None):
+        """
+        Get the input keyword arguments.
+        If *key* is `None`, return the full dict.
+        """
+        if key is None:
+            return self._init_kwargs
+
+        return self._init_kwargs.get(key)
 
 
     def add_quantity_modifier(self, quantity, modifier, overwrite=False):
@@ -218,68 +324,6 @@ class BaseGenericCatalog(object):
             del self._quantity_modifiers[quantity]
 
 
-    def has_quantity(self, quantity, include_native=True):
-        """
-        Check if *quantity* is available in this galaxy catalog
-
-        Parameters
-        ----------
-        quantity : str
-            a quantity name to check
-
-        include_native : bool, optional
-            whether or not to include native quantity names when checking
-
-        Returns
-        -------
-        has_quantity : bool
-            True if the quantities are all available; otherwise False
-        """
-
-        if include_native:
-            return all(q in self._native_quantities for q in self._translate_quantities({quantity}))
-
-        return quantity in self._quantity_modifiers
-
-
-    def has_quantities(self, quantities, include_native=True):
-        """
-        Check if ALL *quantities* specified are available in this galaxy catalog
-
-        Parameters
-        ----------
-        quantities : iterable
-            a list of quantity names to check
-
-        include_native : bool, optional
-            whether or not to include native quantity names when checking
-
-        Returns
-        -------
-        has_quantities : bool
-            True if the quantities are all available; otherwise False
-        """
-        quantities = set(quantities)
-
-        if include_native:
-            return all(q in self._native_quantities for q in self._translate_quantities(quantities))
-
-        return all(q in self._quantity_modifiers for q in quantities)
-
-
-    def first_available(self, *quantities):
-        """
-        Return the first available quantity in the input arguments.
-        Raise an error if none of them is available.
-        """
-        for i, q in enumerate(quantities):
-            if self.has_quantity(q):
-                if i:
-                    warnings.warn('{} not available; using {} instead'.format(quantities[0], q))
-                return q
-        raise ValueError('None of these quantities exists')
-
-
     def _translate_quantity(self, quantity_requested, native_quantities_needed=None):
         if native_quantities_needed is None:
             native_quantities_needed = defaultdict(list)
@@ -335,30 +379,13 @@ class BaseGenericCatalog(object):
         return native_quantities_loaded[modifier]
 
 
-    @staticmethod
-    def _get_mask_from_filter(filters, data, premask=None):
-        mask = premask
-        if filters:
-            for f in filters:
-                if mask is None:
-                    mask = f[0](*(data[_] for _ in f[1:]))
-                else:
-                    mask &= f[0](*(data[_] for _ in f[1:]))
-        return mask
-
-
-    @staticmethod
-    def _get_quantities_from_filters(filters):
-        return set(q for f in filters for q in f[1:])
-
-
     def _load_quantities(self, quantities, dataset):
         native_data = {q: self._fetch_native_quantity(dataset, q) for q in self._translate_quantities(quantities)}
         return {q: self._assemble_quantity(q, native_data) for q in quantities}
 
 
     def _preprocess_requested_quantities(self, quantities):
-        if isinstance(quantities, basestring):
+        if _is_string_like(quantities):
             quantities = {quantities}
 
         quantities = set(quantities)
@@ -370,91 +397,42 @@ class BaseGenericCatalog(object):
         return quantities
 
 
-    def _preprocess_requested_filters(self, filters):
+    def _preprocess_filters(self, filters):
         if filters is None:
-            filters = tuple()
+            filters = GCRQuery()
+        elif _is_string_like(filters):
+            filters = GCRQuery(filters)
+        else:
+            filters = GCRQuery(*filters)
 
-        if not all(isinstance(f, (tuple, list)) and len(f) > 1 and callable(f[0]) and all(isinstance(q, basestring) for q in f[1:]) for f in filters):
-            raise ValueError('`filters is not set correctly. Must be None or [(callable, str, str, ...), ...]')
+        self._check_quantities_exist(filters.variable_names, raise_exception=True)
 
-        self._check_quantities_exist(self._get_quantities_from_filters(filters), raise_exception=True)
-
-        pre_filters = list()
-        post_filters = list()
-        for f in filters:
-            if set(f[1:]).issubset(self._pre_filter_quantities):
-                pre_filters.append(f)
-            else:
-                post_filters.append(f)
-
-        return pre_filters if pre_filters else None, post_filters
+        return filters
 
 
-    def _get_quantities_iter(self, quantities, pre_filters, post_filters):
-        for dataset in self._iter_native_dataset(pre_filters):
+    def _check_native_filters(self, native_filters):
+        for f in native_filters:
+            if isinstance(f, (tuple, list)) and \
+                len(f) > 1 and \
+                callable(f[0]) and \
+                set(f[1:]).issubset(self._native_filter_quantities):
+                continue
 
-            if pre_filters:
-                data = self._load_quantities(self._get_quantities_from_filters(pre_filters), dataset)
-                mask = self._get_mask_from_filter(pre_filters, data)
-                if mask is not None:
-                    if not mask.any():
-                        continue
-                    if mask.all():
-                        mask = None
-            else:
-                data = dict()
-                mask = None
+            raise ValueError('`native_filters` is not set correctly. Must be None or [(callable, str, str, ...), ...]')
 
-            rest_quantities = quantities.union(self._get_quantities_from_filters(post_filters))
-            for q in set(data).difference(rest_quantities):
-                del data[q]
-            data.update(self._load_quantities(rest_quantities.difference(set(data)), dataset))
-            mask = self._get_mask_from_filter(post_filters, data, mask)
+
+    def _get_quantities_iter(self, quantities, filters, native_filters):
+        for dataset in self._iter_native_dataset(native_filters):
+
+            quantities_all = quantities.union(set(filters.variable_names))
+            data = self._load_quantities(quantities_all, dataset)
+            data = filters.filter(data)
+
             for q in set(data).difference(quantities):
                 del data[q]
-            if mask is not None and not mask.all():
-                for q in data:
-                    data[q] = data[q][mask]
-            del mask
+
             yield data
             del data
-
-
-    def _concatenate_quantities(self, quantities, pre_filters, post_filters):
-        requested_data = defaultdict(list)
-        for data in self._get_quantities_iter(quantities, pre_filters, post_filters):
-            for q in quantities:
-                requested_data[q].append(data[q])
-        return {q: np.concatenate(requested_data[q]) if requested_data[q] else np.array([]) for q in quantities}
-
-
-    def get_quantities(self, quantities, filters=None, return_iterator=False):
-        """
-        Fetch quantities from this galaxy catalog.
-
-        Parameters
-        ----------
-        quantities : str or list of str or tuple of str
-            quantities to fetch
-
-        filters : list of tuple, optional
-            filters to apply. Each filter should be in the format of (callable, str, str, ...)
-
-        return_iterator : bool, optional
-            if True, return an iterator that iterates over the native format, default is False
-
-        Returns
-        -------
-        quantities : dict, or iterator of dict (when `return_iterator` is True)
-        """
-
-        quantities = self._preprocess_requested_quantities(quantities)
-        pre_filters, post_filters = self._preprocess_requested_filters(filters)
-
-        if return_iterator:
-            return self._get_quantities_iter(quantities, pre_filters, post_filters)
-
-        return self._concatenate_quantities(quantities, pre_filters, post_filters)
 
 
     def __getitem__(self, key):
@@ -467,16 +445,21 @@ class BaseGenericCatalog(object):
 
 
     def _generate_native_quantity_list(self):
-        """ To be implemented by subclass. Must return an iterator"""
+        """ To be implemented by subclass. Must return an iterator """
         raise NotImplementedError
 
 
-    def _iter_native_dataset(self, pre_filters=None):
-        """ To be implemented by subclass. Must be a generator."""
+    def _iter_native_dataset(self, native_filters=None):
+        """
+        To be implemented by subclass. Must be a generator.
+        Must return a *dataset* object that can be used by `_fetch_native_quantity`
+        """
         raise NotImplementedError
 
 
-    @staticmethod
-    def _fetch_native_quantity(dataset, native_quantity):
-        """ To be overwritten by subclass. Must return a 1-d numpy.ndarray """
-        return np.asanyarray(dataset[native_quantity]).ravel()
+    def _fetch_native_quantity(self, dataset, native_quantity):
+        """
+        To be implemented by subclass. Must return a 1-d numpy.ndarray.
+        *dataset* must be the return of `_iter_native_dataset`
+        """
+        raise NotImplementedError
