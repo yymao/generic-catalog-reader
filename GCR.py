@@ -454,8 +454,7 @@ class BaseGenericCatalog(object):
         if return_iterator:
             return self._get_quantities_iter(quantities, pre_filters, post_filters)
 
-        d = self._concatenate_quantities(quantities, pre_filters, post_filters)
-        return d
+        return self._concatenate_quantities(quantities, pre_filters, post_filters)
 
 
     def __getitem__(self, key):
