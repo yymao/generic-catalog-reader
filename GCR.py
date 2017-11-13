@@ -2,7 +2,7 @@
 Contains the base class for a generic catalog (BaseGenericCatalog).
 """
 __all__ = ['BaseGenericCatalog', 'dict_to_numpy_array', 'GCRQuery']
-__version__ = '0.4.0'
+__version__ = '0.5.0'
 __author__ = 'Yao-Yuan Mao'
 
 import warnings
@@ -364,26 +364,6 @@ class BaseGenericCatalog(object):
         return True
 
 
-    def _assemble_quantity(self, quantity_requested, native_quantities_loaded):
-        modifier = self._quantity_modifiers.get(quantity_requested, self._default_quantity_modifier)
-
-        if modifier is None:
-            return native_quantities_loaded[quantity_requested]
-
-        elif callable(modifier):
-            return modifier(native_quantities_loaded[quantity_requested])
-
-        elif isinstance(modifier, (tuple, list)) and len(modifier) > 1 and callable(modifier[0]):
-            return modifier[0](*(native_quantities_loaded[_] for _ in modifier[1:]))
-
-        return native_quantities_loaded[modifier]
-
-
-    def _load_quantities(self, quantities, dataset):
-        native_data = {q: self._fetch_native_quantity(dataset, q) for q in self._translate_quantities(quantities)}
-        return {q: self._assemble_quantity(q, native_data) for q in quantities}
-
-
     def _preprocess_requested_quantities(self, quantities):
         if _is_string_like(quantities):
             quantities = {quantities}
@@ -421,11 +401,29 @@ class BaseGenericCatalog(object):
             raise ValueError('`native_filters` is not set correctly. Must be None or [(callable, str, str, ...), ...]')
 
 
+    def _assemble_quantity(self, quantity_requested, native_quantities_loaded):
+        modifier = self._quantity_modifiers.get(quantity_requested, self._default_quantity_modifier)
+
+        if modifier is None:
+            return native_quantities_loaded[quantity_requested]
+
+        elif callable(modifier):
+            return modifier(native_quantities_loaded[quantity_requested])
+
+        elif isinstance(modifier, (tuple, list)) and len(modifier) > 1 and callable(modifier[0]):
+            return modifier[0](*(native_quantities_loaded[_] for _ in modifier[1:]))
+
+        return native_quantities_loaded[modifier]
+
+
     def _get_quantities_iter(self, quantities, filters, native_filters):
-        for dataset in self._iter_native_dataset(native_filters):
+        for native_quantity_getter in self._iter_native_dataset(native_filters):
 
             quantities_all = quantities.union(set(filters.variable_names))
-            data = self._load_quantities(quantities_all, dataset)
+            native_data = {q: native_quantity_getter(q) for q in self._translate_quantities(quantities_all)}
+            data = {q: self._assemble_quantity(q, native_data) for q in quantities_all}
+            del quantities_all, native_data
+
             data = filters.filter(data)
 
             for q in set(data).difference(quantities):
@@ -440,26 +438,34 @@ class BaseGenericCatalog(object):
 
 
     def _subclass_init(self, **kwargs):
-        """ To be implemented by subclass. """
+        """
+        To be implemented by subclass.
+        Must return `None`.
+        Must accept any keyword argument (i.e., must have **kwargs).
+        This method is called during __init__().
+        """
         raise NotImplementedError
 
 
     def _generate_native_quantity_list(self):
-        """ To be implemented by subclass. Must return an iterator """
+        """
+        To be implemented by subclass.
+        Must return an iterable of all native quantity names.
+        """
         raise NotImplementedError
 
 
     def _iter_native_dataset(self, native_filters=None):
         """
-        To be implemented by subclass. Must be a generator.
-        Must return a *dataset* object that can be used by `_fetch_native_quantity`
-        """
-        raise NotImplementedError
+        To be implemented by subclass.
+        Must be a generator.
+        Must yield a callable, *native_quantity_getter*.
+        This function must iterate over subsets of rows, not columns!
 
-
-    def _fetch_native_quantity(self, dataset, native_quantity):
-        """
-        To be implemented by subclass. Must return a 1-d numpy.ndarray.
-        *dataset* must be the return of `_iter_native_dataset`
+        Below are specifications of *native_quantity_getter*
+        -----------------------------------------
+        Must take a single argument of a native quantity name.
+        Should assume the argument is valid.
+        Must return a numpy 1d array.
         """
         raise NotImplementedError
