@@ -2,7 +2,7 @@
 Contains the base class for a generic catalog (BaseGenericCatalog).
 """
 __all__ = ['BaseGenericCatalog', 'dict_to_numpy_array', 'GCRQuery']
-__version__ = '0.6.0'
+__version__ = '0.6.1'
 __author__ = 'Yao-Yuan Mao'
 
 import warnings
@@ -208,6 +208,7 @@ class BaseGenericCatalog(object):
         If *key* is `None`, return the full dict.
         """
         warnings.warn("`get_input_kwargs` is deprecated; use `get_catalog_info` instead.", DeprecationWarning)
+        return self.get_catalog_info(key, default)
 
 
     def get_catalog_info(self, key=None, default=None):
