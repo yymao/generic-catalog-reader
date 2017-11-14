@@ -2,7 +2,7 @@
 Contains the base class for a generic catalog (BaseGenericCatalog).
 """
 __all__ = ['BaseGenericCatalog', 'dict_to_numpy_array', 'GCRQuery']
-__version__ = '0.5.1'
+__version__ = '0.6.0'
 __author__ = 'Yao-Yuan Mao'
 
 import warnings
@@ -161,23 +161,31 @@ class BaseGenericCatalog(object):
         return all(q in self._quantity_modifiers for q in quantities)
 
 
-    def list_all_quantities(self, include_native=False):
+    def list_all_quantities(self, include_native=False, with_info=False):
         """
-        Return a list of all available quantities in this catalog
+        Return a list of all available quantities in this catalog.
+
+        If *include_native* is `True`, includes native quantities.
+        If *with_info* is `True`, return a dict with quantity info.
+
+        See also: list_all_native_quantities
         """
-        output = list(self._quantity_modifiers)
+        q = set(self._quantity_modifiers)
         if include_native:
-            for q in self._native_quantities:
-                if q not in output:
-                    output.append(q)
-        return output
+            q.union(self._native_quantities)
+        return {k: self.get_quantity_info(k) for k in q} if with_info else list(q)
 
 
-    def list_all_native_quantities(self):
+    def list_all_native_quantities(self, with_info=False):
         """
-        Return a list of all available native quantities in this catalog
+        Return a list of all available native quantities in this catalog.
+
+        If *with_info* is `True`, return a dict with quantity info.
+
+        See also: list_all_quantities
         """
-        return list(self._native_quantities)
+        q = self._native_quantities
+        return {k: self.get_quantity_info(k) for k in q} if with_info else list(q)
 
 
     def first_available(self, *quantities):
@@ -192,15 +200,38 @@ class BaseGenericCatalog(object):
                 return q
 
 
-    def get_input_kwargs(self, key=None):
+    def get_input_kwargs(self, key=None, default=None):
         """
-        Get the input keyword arguments.
+        Deprecated. Use `get_catalog_info` instead.
+
+        Get information from the catalog config file.
+        If *key* is `None`, return the full dict.
+        """
+        warnings.warn("`get_input_kwargs` is deprecated; use `get_catalog_info` instead.", DeprecationWarning)
+
+
+    def get_catalog_info(self, key=None, default=None):
+        """
+        Get information from the catalog config file.
         If *key* is `None`, return the full dict.
         """
         if key is None:
             return self._init_kwargs
 
-        return self._init_kwargs.get(key)
+        return self._init_kwargs.get(key, default)
+
+
+    def get_quantity_info(self, quantity, key=None, default=None):
+        """
+        Get information of a certain quantity.
+        If *key* is `None`, return the full dict for that quantity.
+        """
+        d = self._get_quantity_info_dict(quantity, default if key is None else dict())
+
+        if key is None:
+            return d
+
+        return d.get(key, default)
 
 
     def add_quantity_modifier(self, quantity, modifier, overwrite=False):
@@ -322,6 +353,15 @@ class BaseGenericCatalog(object):
         """
         if quantity in self._quantity_modifiers:
             del self._quantity_modifiers[quantity]
+
+
+    def _get_quantity_info_dict(self, quantity, default=None):
+        """
+        To be implemented by subclass.
+        Must return a dictionary for existing quantity.
+        For non-existing quantity must return default.
+        """
+        return default
 
 
     def _translate_quantity(self, quantity_requested, native_quantities_needed=None):
