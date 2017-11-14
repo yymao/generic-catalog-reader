@@ -2,7 +2,7 @@
 Contains the base class for a generic catalog (BaseGenericCatalog).
 """
 __all__ = ['BaseGenericCatalog', 'dict_to_numpy_array', 'GCRQuery']
-__version__ = '0.5.0'
+__version__ = '0.5.1'
 __author__ = 'Yao-Yuan Mao'
 
 import warnings
@@ -416,19 +416,18 @@ class BaseGenericCatalog(object):
         return native_quantities_loaded[modifier]
 
 
+    def _load_quantities(self, quantities, native_quantity_getter):
+        native_data = {q: native_quantity_getter(q) for q in self._translate_quantities(quantities)}
+        return {q: self._assemble_quantity(q, native_data) for q in quantities}
+
+
     def _get_quantities_iter(self, quantities, filters, native_filters):
         for native_quantity_getter in self._iter_native_dataset(native_filters):
-
-            quantities_all = quantities.union(set(filters.variable_names))
-            native_data = {q: native_quantity_getter(q) for q in self._translate_quantities(quantities_all)}
-            data = {q: self._assemble_quantity(q, native_data) for q in quantities_all}
-            del quantities_all, native_data
-
+            data = self._load_quantities(quantities.union(set(filters.variable_names)),
+                                         native_quantity_getter)
             data = filters.filter(data)
-
             for q in set(data).difference(quantities):
                 del data[q]
-
             yield data
             del data
 
