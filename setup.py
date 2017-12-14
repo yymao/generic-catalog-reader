@@ -15,7 +15,7 @@ setup(
     version='0.6.2',
     description='Generic Catalog Reader: A common reader interface for accessing generic catalogs',
     url='https://github.com/yymao/generic-catalog-reader',
-    download_url='https://github.com/yymao/generic-catalog-reader/archive/v0.6.1.zip',
+    download_url='https://github.com/yymao/generic-catalog-reader/archive/v0.6.2.zip',
     author='Yao-Yuan Mao',
     author_email='yymao.astro@gmail.com',
     maintainer='Yao-Yuan Mao',
