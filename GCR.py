@@ -2,7 +2,7 @@
 Contains the base class for a generic catalog (BaseGenericCatalog).
 """
 __all__ = ['BaseGenericCatalog', 'dict_to_numpy_array', 'GCRQuery']
-__version__ = '0.6.1'
+__version__ = '0.6.2'
 __author__ = 'Yao-Yuan Mao'
 
 import warnings
@@ -172,7 +172,7 @@ class BaseGenericCatalog(object):
         """
         q = set(self._quantity_modifiers)
         if include_native:
-            q.union(self._native_quantities)
+            q.update(self._native_quantities)
         return {k: self.get_quantity_info(k) for k in q} if with_info else list(q)
 
 
