@@ -53,6 +53,7 @@ class BaseGenericCatalog(object):
 
     _default_quantity_modifier = None
     _quantity_modifiers = dict()
+    _native_quantities = set()
     _native_filter_quantities = set()
 
     def __init__(self, **kwargs):
