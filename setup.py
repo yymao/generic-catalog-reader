@@ -4,7 +4,7 @@ Generic Catalog Reader (GCR)
 A common reader interface for accessing generic catalogs
 https://github.com/yymao/generic-catalog-reader
 The MIT License (MIT)
-Copyright (c) 2017 Yao-Yuan Mao (yymao)
+Copyright (c) 2017-2018 Yao-Yuan Mao (yymao)
 http://opensource.org/licenses/MIT
 """
 
@@ -12,10 +12,10 @@ from setuptools import setup
 
 setup(
     name='GCR',
-    version='0.6.2',
+    version='0.6.3',
     description='Generic Catalog Reader: A common reader interface for accessing generic catalogs',
     url='https://github.com/yymao/generic-catalog-reader',
-    download_url='https://github.com/yymao/generic-catalog-reader/archive/v0.6.2.zip',
+    download_url='https://github.com/yymao/generic-catalog-reader/archive/v0.6.3.zip',
     author='Yao-Yuan Mao',
     author_email='yymao.astro@gmail.com',
     maintainer='Yao-Yuan Mao',
