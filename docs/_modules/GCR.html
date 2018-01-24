@@ -43,7 +43,7 @@
 <span class="sd">Contains the base class for a generic catalog (BaseGenericCatalog).</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;BaseGenericCatalog&#39;</span><span class="p">,</span> <span class="s1">&#39;dict_to_numpy_array&#39;</span><span class="p">,</span> <span class="s1">&#39;GCRQuery&#39;</span><span class="p">]</span>
-<span class="n">__version__</span> <span class="o">=</span> <span class="s1">&#39;0.6.1&#39;</span>
+<span class="n">__version__</span> <span class="o">=</span> <span class="s1">&#39;0.6.2&#39;</span>
 <span class="n">__author__</span> <span class="o">=</span> <span class="s1">&#39;Yao-Yuan Mao&#39;</span>
 
 <span class="kn">import</span> <span class="nn">warnings</span>
@@ -213,7 +213,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">q</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_quantity_modifiers</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">include_native</span><span class="p">:</span>
-            <span class="n">q</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_native_quantities</span><span class="p">)</span>
+            <span class="n">q</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_native_quantities</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_quantity_info</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">q</span><span class="p">}</span> <span class="k">if</span> <span class="n">with_info</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="n">q</span><span class="p">)</span></div>
 
 
@@ -585,7 +585,7 @@
       &copy;2017, Yao-Yuan Mao.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.3</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.6</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
       
     </div>
