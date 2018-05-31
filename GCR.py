@@ -75,7 +75,7 @@ class BaseGenericCatalog(object):
 
     def get_quantities(self, quantities, filters=None, native_filters=None, return_iterator=False):
         """
-        Fetch quantities from this galaxy catalog.
+        Fetch quantities from this catalog.
 
         Parameters
         ----------
@@ -115,7 +115,7 @@ class BaseGenericCatalog(object):
 
     def has_quantity(self, quantity, include_native=True):
         """
-        Check if *quantity* is available in this galaxy catalog
+        Check if *quantity* is available in this catalog
 
         Parameters
         ----------
@@ -139,7 +139,7 @@ class BaseGenericCatalog(object):
 
     def has_quantities(self, quantities, include_native=True):
         """
-        Check if ALL *quantities* specified are available in this galaxy catalog
+        Check if ALL *quantities* specified are available in this catalog
 
         Parameters
         ----------
