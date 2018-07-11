@@ -2,7 +2,7 @@
 Contains the base class for a generic catalog (BaseGenericCatalog).
 """
 __all__ = ['BaseGenericCatalog', 'dict_to_numpy_array', 'GCRQuery']
-__version__ = '0.6.3'
+__version__ = '0.6.4'
 __author__ = 'Yao-Yuan Mao'
 
 import warnings
@@ -55,6 +55,7 @@ class BaseGenericCatalog(object):
     _quantity_modifiers = dict()
     _native_quantities = set()
     _native_filter_quantities = set()
+    _allow_string_native_filter = False
 
     def __init__(self, **kwargs):
         self._init_kwargs = kwargs.copy()
@@ -434,6 +435,8 @@ class BaseGenericCatalog(object):
 
     def _check_native_filters(self, native_filters):
         for f in native_filters:
+            if self._allow_string_native_filter and _is_string_like(f):
+                continue
             if isinstance(f, (tuple, list)) and \
                 len(f) > 1 and \
                 callable(f[0]) and \
