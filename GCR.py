@@ -483,8 +483,22 @@ class BaseGenericCatalog(object):
         return native_quantities_loaded[modifier]
 
 
+    @staticmethod
+    def _obtain_native_data_dict(native_quantities_needed, native_quantity_getter):
+        """
+        This method can be overwritten if `native_quantity_getter` has a
+        different behavior, for example, if `native_quantity_getter` can
+        retrive multiple quantities at once, this method can return
+        ```python
+        dict(zip(native_quantities_needed, native_quantity_getter(native_quantities_needed)))
+        ```
+        """
+        return {q: native_quantity_getter(q) for q in native_quantities_needed}
+
+
     def _load_quantities(self, quantities, native_quantity_getter):
-        native_data = {q: native_quantity_getter(q) for q in self._translate_quantities(quantities)}
+        native_quantities_needed = self._translate_quantities(quantities)
+        native_data = self._obtain_native_data_dict(native_quantities_needed, native_quantity_getter)
         return {q: self._assemble_quantity(q, native_data) for q in quantities}
 
 
