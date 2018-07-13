@@ -32,6 +32,19 @@ class GCRQuery(easyquery.Query):
     def _mask_table(table, mask):
         return {k: v[mask] for k, v in table.items()}
 
+    @staticmethod
+    def _check_basic_query(basic_query):
+        return basic_query is None or _is_string_like(basic_query) or \
+                (isinstance(basic_query, tuple) and \
+                len(basic_query) > 1 and callable(basic_query[0]))
+
+    def check_scalar(self, scalar_dict):
+        """
+        check if `scalar_dict` satisfy query
+        """
+        table = {k: np.array([v]) for k, v in scalar_dict.items()}
+        return self.mask(table)[0]
+
 
 def _trivial_callable(x):
     return x
@@ -55,7 +68,7 @@ class BaseGenericCatalog(object):
     _quantity_modifiers = dict()
     _native_quantities = set()
     _native_filter_quantities = set()
-    _allow_string_native_filter = False
+    native_filter_string_only = False
 
     def __init__(self, **kwargs):
         self._init_kwargs = kwargs.copy()
@@ -99,8 +112,7 @@ class BaseGenericCatalog(object):
 
         quantities = self._preprocess_requested_quantities(quantities)
         filters = self._preprocess_filters(filters)
-        if native_filters:
-            self._check_native_filters(native_filters)
+        native_filters = self._preprocess_native_filters(native_filters)
 
         it = self._get_quantities_iter(quantities, filters, native_filters)
 
@@ -433,17 +445,27 @@ class BaseGenericCatalog(object):
         return filters
 
 
-    def _check_native_filters(self, native_filters):
-        for f in native_filters:
-            if self._allow_string_native_filter and _is_string_like(f):
-                continue
-            if isinstance(f, (tuple, list)) and \
-                len(f) > 1 and \
-                callable(f[0]) and \
-                set(f[1:]).issubset(self._native_filter_quantities):
-                continue
+    def _preprocess_native_filters(self, native_filters):
+        if self.native_filter_string_only:
+            if not native_filters:
+                return None
+            if _is_string_like(native_filters):
+                return (native_filters,)
+            if not all(_is_string_like(f) for f in native_filters):
+                raise ValueError('`native_filters` is not set correctly. Must be None or a list of strings.')
+            return tuple(native_filters)
 
-            raise ValueError('`native_filters` is not set correctly. Must be None or [(callable, str, str, ...), ...]')
+        if native_filters is None:
+            native_filters = GCRQuery()
+        elif _is_string_like(native_filters):
+            native_filters = GCRQuery(native_filters)
+        else:
+            native_filters = GCRQuery(*native_filters)
+
+        if not set(native_filters.variable_names).issubset(self._native_filter_quantities):
+            raise ValueError('Not all quantities in `native_filters` can be used in native filters!')
+
+        return native_filters
 
 
     def _assemble_quantity(self, quantity_requested, native_quantities_loaded):
