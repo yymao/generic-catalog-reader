@@ -2,7 +2,7 @@
 Contains the base class for a generic catalog (BaseGenericCatalog).
 """
 __all__ = ['BaseGenericCatalog', 'dict_to_numpy_array', 'GCRQuery']
-__version__ = '0.7.0'
+__version__ = '0.7.1'
 __author__ = 'Yao-Yuan Mao'
 
 import warnings
@@ -26,7 +26,10 @@ def _is_string_like(obj):
 class GCRQuery(easyquery.Query):
     @staticmethod
     def _get_table_len(table):
-        return len(next(table.values()))
+        try:
+            return len(next(iter(table.values())))
+        except StopIteration:
+            return 0
 
     @staticmethod
     def _mask_table(table, mask):
@@ -433,7 +436,9 @@ class BaseGenericCatalog(object):
 
 
     def _preprocess_filters(self, filters):
-        if filters is None:
+        if isinstance(filters, GCRQuery):
+            pass
+        elif not filters:
             filters = GCRQuery()
         elif _is_string_like(filters):
             filters = GCRQuery(filters)
@@ -455,14 +460,17 @@ class BaseGenericCatalog(object):
                 raise ValueError('`native_filters` is not set correctly. Must be None or a list of strings.')
             return tuple(native_filters)
 
-        if native_filters is None:
-            native_filters = GCRQuery()
+        if isinstance(native_filters, GCRQuery):
+            pass
+        elif not native_filters:
+            native_filters = None
         elif _is_string_like(native_filters):
             native_filters = GCRQuery(native_filters)
         else:
             native_filters = GCRQuery(*native_filters)
 
-        if not set(native_filters.variable_names).issubset(self._native_filter_quantities):
+        if native_filters is not None and \
+                not set(native_filters.variable_names).issubset(self._native_filter_quantities):
             raise ValueError('Not all quantities in `native_filters` can be used in native filters!')
 
         return native_filters
@@ -542,9 +550,17 @@ class BaseGenericCatalog(object):
         Must yield a callable, *native_quantity_getter*.
         This function must iterate over subsets of rows, not columns!
 
+        *native_filters* will either be `None` or a `GCRQuery` object
+        (unless `self.native_filter_string_only` is set to True, in which
+        case *native_filters* will either be `None` or a tuple of strings).
+        If *native_filters* is a GCRQuery object, you can use
+        `native_filters.check_scalar(scalar_dict)` to check if `scalar_dict`
+        satisfies `native_filters`.
+
         Below are specifications of *native_quantity_getter*
         -----------------------------------------
-        Must take a single argument of a native quantity name.
+        Must take a single argument of a native quantity name
+        (unless `_obtain_native_data_dict` is edited accordingly)
         Should assume the argument is valid.
         Must return a numpy 1d array.
         """
