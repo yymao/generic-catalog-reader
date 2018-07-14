@@ -436,7 +436,9 @@ class BaseGenericCatalog(object):
 
 
     def _preprocess_filters(self, filters):
-        if filters is None:
+        if isinstance(filters, GCRQuery):
+            pass
+        elif not filters:
             filters = GCRQuery()
         elif _is_string_like(filters):
             filters = GCRQuery(filters)
@@ -458,14 +460,17 @@ class BaseGenericCatalog(object):
                 raise ValueError('`native_filters` is not set correctly. Must be None or a list of strings.')
             return tuple(native_filters)
 
-        if native_filters is None:
-            native_filters = GCRQuery()
+        if isinstance(native_filters, GCRQuery):
+            pass
+        elif not native_filters:
+            native_filters = None
         elif _is_string_like(native_filters):
             native_filters = GCRQuery(native_filters)
         else:
             native_filters = GCRQuery(*native_filters)
 
-        if not set(native_filters.variable_names).issubset(self._native_filter_quantities):
+        if native_filters is not None and \
+                not set(native_filters.variable_names).issubset(self._native_filter_quantities):
             raise ValueError('Not all quantities in `native_filters` can be used in native filters!')
 
         return native_filters
