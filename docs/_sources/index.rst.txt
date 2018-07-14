@@ -6,7 +6,7 @@
 
 Generic Catalog Reader (GCR)
 ============================
-.. currentmodule:: GCR
+.. automodule:: GCR
 
 .. autoclass:: GCR.BaseGenericCatalog
    :members:
