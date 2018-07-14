@@ -36,7 +36,7 @@
 <span class="sd">Contains the base class for a generic catalog (BaseGenericCatalog).</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;BaseGenericCatalog&#39;</span><span class="p">,</span> <span class="s1">&#39;dict_to_numpy_array&#39;</span><span class="p">,</span> <span class="s1">&#39;GCRQuery&#39;</span><span class="p">]</span>
-<span class="n">__version__</span> <span class="o">=</span> <span class="s1">&#39;0.7.1&#39;</span>
+<span class="n">__version__</span> <span class="o">=</span> <span class="s1">&#39;0.7.2&#39;</span>
 <span class="n">__author__</span> <span class="o">=</span> <span class="s1">&#39;Yao-Yuan Mao&#39;</span>
 
 <span class="kn">import</span> <span class="nn">warnings</span>
@@ -289,6 +289,7 @@
 <div class="viewcode-block" id="BaseGenericCatalog.add_quantity_modifier"><a class="viewcode-back" href="../index.html#GCR.BaseGenericCatalog.add_quantity_modifier">[docs]</a>    <span class="k">def</span> <span class="nf">add_quantity_modifier</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">quantity</span><span class="p">,</span> <span class="n">modifier</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add a quantify modifier.</span>
+<span class="sd">        Consider useing the high-level function `add_derived_quantity` instead!</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -355,43 +356,58 @@
         <span class="k">return</span> <span class="p">(</span><span class="n">_trivial_callable</span><span class="p">,</span> <span class="n">modifier</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="BaseGenericCatalog.add_modifier_on_derived_quantities"><a class="viewcode-back" href="../index.html#GCR.BaseGenericCatalog.add_modifier_on_derived_quantities">[docs]</a>    <span class="k">def</span> <span class="nf">add_modifier_on_derived_quantities</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_quantity</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">quantities</span><span class="p">):</span>
+<div class="viewcode-block" id="BaseGenericCatalog.add_derived_quantity"><a class="viewcode-back" href="../index.html#GCR.BaseGenericCatalog.add_derived_quantity">[docs]</a>    <span class="k">def</span> <span class="nf">add_derived_quantity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">derived_quantity</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">quantities</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Add a quantify modifier.</span>
+<span class="sd">        Add a derived quantify modifier.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        new_quantity : str</span>
-<span class="sd">            name of the new quantity to add</span>
+<span class="sd">        derived_quantity : str</span>
+<span class="sd">            name of the derived quantity to be added</span>
 
 <span class="sd">        func : callable</span>
+<span class="sd">            function to calculate the derived quantity</span>
+<span class="sd">            the number of arguments should equal number of following `quantities`</span>
 
 <span class="sd">        quantities : list of str</span>
 <span class="sd">            quantities to pass to the callable</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">new_quantity</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quantity_modifiers</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;quantity name `</span><span class="si">{}</span><span class="s1">` already exists&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">new_quantity</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">derived_quantity</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quantity_modifiers</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;quantity name `</span><span class="si">{}</span><span class="s1">` already exists&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">derived_quantity</span><span class="p">))</span>
 
-        <span class="n">functions</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">quantities_needed</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">quantity_count</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">quantities</span><span class="p">:</span>
-            <span class="n">modifier</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_normalized_quantity_modifier</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
-            <span class="n">functions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">modifier</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-            <span class="n">quantities_needed</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">modifier</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
-            <span class="n">quantity_count</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">modifier</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="n">quantities</span><span class="p">)</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_native_quantities</span><span class="p">):</span>
+            <span class="n">new_modifier</span> <span class="o">=</span> <span class="p">(</span><span class="n">func</span><span class="p">,)</span> <span class="o">+</span> <span class="n">quantities</span>
 
-        <span class="k">def</span> <span class="nf">_new_func</span><span class="p">(</span><span class="o">*</span><span class="n">x</span><span class="p">):</span>
-            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="nb">sum</span><span class="p">(</span><span class="n">quantity_count</span><span class="p">)</span>
-            <span class="n">count_current</span> <span class="o">=</span> <span class="mi">0</span>
-            <span class="n">new_args</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">func_this</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">functions</span><span class="p">,</span> <span class="n">quantity_count</span><span class="p">):</span>
-                <span class="n">new_args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">func_this</span><span class="p">(</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="n">count_current</span><span class="p">:</span><span class="n">count_current</span><span class="o">+</span><span class="n">count</span><span class="p">]))</span>
-                <span class="n">count_current</span> <span class="o">+=</span> <span class="n">count</span>
-            <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">new_args</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">functions</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">quantities_needed</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">quantity_count</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">quantities</span><span class="p">:</span>
+                <span class="n">modifier</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_normalized_quantity_modifier</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+                <span class="n">functions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">modifier</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">quantities_needed</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">modifier</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+                <span class="n">quantity_count</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">modifier</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_quantity_modifiers</span><span class="p">[</span><span class="n">new_quantity</span><span class="p">]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">_new_func</span><span class="p">]</span> <span class="o">+</span> <span class="n">quantities_needed</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_check_quantities_exist</span><span class="p">([</span><span class="n">new_quantity</span><span class="p">],</span> <span class="n">raise_exception</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+            <span class="k">def</span> <span class="nf">_new_func</span><span class="p">(</span><span class="o">*</span><span class="n">x</span><span class="p">):</span>
+                <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="nb">sum</span><span class="p">(</span><span class="n">quantity_count</span><span class="p">)</span>
+                <span class="n">count_current</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">new_args</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">func_this</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">functions</span><span class="p">,</span> <span class="n">quantity_count</span><span class="p">):</span>
+                    <span class="n">new_args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">func_this</span><span class="p">(</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="n">count_current</span><span class="p">:</span><span class="n">count_current</span><span class="o">+</span><span class="n">count</span><span class="p">]))</span>
+                    <span class="n">count_current</span> <span class="o">+=</span> <span class="n">count</span>
+                <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">new_args</span><span class="p">)</span>
+
+            <span class="n">new_modifier</span> <span class="o">=</span> <span class="p">(</span><span class="n">_new_func</span><span class="p">,)</span> <span class="o">+</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">quantities_needed</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_quantity_modifier</span><span class="p">(</span><span class="n">derived_quantity</span><span class="p">,</span> <span class="n">new_modifier</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BaseGenericCatalog.add_modifier_on_derived_quantities"><a class="viewcode-back" href="../index.html#GCR.BaseGenericCatalog.add_modifier_on_derived_quantities">[docs]</a>    <span class="k">def</span> <span class="nf">add_modifier_on_derived_quantities</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_quantity</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">quantities</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Deprecated. Use `add_derived_quantity` instead.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Use `add_derived_quantity` instead.&quot;</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_derived_quantity</span><span class="p">(</span><span class="n">new_quantity</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">quantities</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="BaseGenericCatalog.del_quantity_modifier"><a class="viewcode-back" href="../index.html#GCR.BaseGenericCatalog.del_quantity_modifier">[docs]</a>    <span class="k">def</span> <span class="nf">del_quantity_modifier</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">quantity</span><span class="p">):</span>
