@@ -550,9 +550,17 @@ class BaseGenericCatalog(object):
         Must yield a callable, *native_quantity_getter*.
         This function must iterate over subsets of rows, not columns!
 
+        *native_filters* will either be `None` or a `GCRQuery` object
+        (unless `self.native_filter_string_only` is set to True, in which
+        case *native_filters* will either be `None` or a tuple of strings).
+        If *native_filters* is a GCRQuery object, you can use
+        `native_filters.check_scalar(scalar_dict)` to check if `scalar_dict`
+        satisfies `native_filters`.
+
         Below are specifications of *native_quantity_getter*
         -----------------------------------------
-        Must take a single argument of a native quantity name.
+        Must take a single argument of a native quantity name
+        (unless `_obtain_native_data_dict` is edited accordingly)
         Should assume the argument is valid.
         Must return a numpy 1d array.
         """
