@@ -2,7 +2,7 @@
 Contains the base class for a generic catalog (BaseGenericCatalog).
 """
 __all__ = ['BaseGenericCatalog', 'dict_to_numpy_array', 'GCRQuery']
-__version__ = '0.7.0'
+__version__ = '0.7.1'
 __author__ = 'Yao-Yuan Mao'
 
 import warnings
