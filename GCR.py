@@ -2,7 +2,7 @@
 Contains the base class for a generic catalog (BaseGenericCatalog).
 """
 __all__ = ['BaseGenericCatalog', 'dict_to_numpy_array', 'GCRQuery']
-__version__ = '0.7.1'
+__version__ = '0.7.2'
 __author__ = 'Yao-Yuan Mao'
 
 import warnings
@@ -255,6 +255,7 @@ class BaseGenericCatalog(object):
     def add_quantity_modifier(self, quantity, modifier, overwrite=False):
         """
         Add a quantify modifier.
+        Consider useing the high-level function `add_derived_quantity` instead!
 
         Parameters
         ----------
@@ -321,43 +322,58 @@ class BaseGenericCatalog(object):
         return (_trivial_callable, modifier)
 
 
-    def add_modifier_on_derived_quantities(self, new_quantity, func, *quantities):
+    def add_derived_quantity(self, derived_quantity, func, *quantities):
         """
-        Add a quantify modifier.
+        Add a derived quantify modifier.
 
         Parameters
         ----------
-        new_quantity : str
-            name of the new quantity to add
+        derived_quantity : str
+            name of the derived quantity to be added
 
         func : callable
+            function to calculate the derived quantity
+            the number of arguments should equal number of following `quantities`
 
         quantities : list of str
             quantities to pass to the callable
         """
-        if new_quantity in self._quantity_modifiers:
-            raise ValueError('quantity name `{}` already exists'.format(new_quantity))
+        if derived_quantity in self._quantity_modifiers:
+            raise ValueError('quantity name `{}` already exists'.format(derived_quantity))
 
-        functions = []
-        quantities_needed = []
-        quantity_count = []
-        for q in quantities:
-            modifier = self.get_normalized_quantity_modifier(q)
-            functions.append(modifier[0])
-            quantities_needed.extend(modifier[1:])
-            quantity_count.append(len(modifier)-1)
+        if set(quantities).issubset(self._native_quantities):
+            new_modifier = (func,) + quantities
 
-        def _new_func(*x):
-            assert len(x) == sum(quantity_count)
-            count_current = 0
-            new_args = []
-            for func_this, count in zip(functions, quantity_count):
-                new_args.append(func_this(*x[count_current:count_current+count]))
-                count_current += count
-            return func(*new_args)
+        else:
+            functions = []
+            quantities_needed = []
+            quantity_count = []
+            for q in quantities:
+                modifier = self.get_normalized_quantity_modifier(q)
+                functions.append(modifier[0])
+                quantities_needed.extend(modifier[1:])
+                quantity_count.append(len(modifier)-1)
 
-        self._quantity_modifiers[new_quantity] = tuple([_new_func] + quantities_needed)
-        self._check_quantities_exist([new_quantity], raise_exception=False)
+            def _new_func(*x):
+                assert len(x) == sum(quantity_count)
+                count_current = 0
+                new_args = []
+                for func_this, count in zip(functions, quantity_count):
+                    new_args.append(func_this(*x[count_current:count_current+count]))
+                    count_current += count
+                return func(*new_args)
+
+            new_modifier = (_new_func,) + tuple(quantities_needed)
+
+        self.add_quantity_modifier(derived_quantity, new_modifier)
+
+
+    def add_modifier_on_derived_quantities(self, new_quantity, func, *quantities):
+        """
+        Deprecated. Use `add_derived_quantity` instead.
+        """
+        warnings.warn("Use `add_derived_quantity` instead.", DeprecationWarning)
+        self.add_derived_quantity(new_quantity, func, *quantities)
 
 
     def del_quantity_modifier(self, quantity):
