@@ -26,7 +26,10 @@ def _is_string_like(obj):
 class GCRQuery(easyquery.Query):
     @staticmethod
     def _get_table_len(table):
-        return len(next(table.values()))
+        try:
+            return len(next(iter(table.values())))
+        except StopIteration:
+            return 0
 
     @staticmethod
     def _mask_table(table, mask):
