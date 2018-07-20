@@ -1,8 +1,10 @@
 import warnings
 from collections import defaultdict
+import numpy as np
 from .base import BaseGenericCatalog
 
 __all__ = ['CompositeCatalog']
+
 
 class CatalogWrapper(object):
     def __init__(self, instance, name, is_master=False, has_matching_format=False):
@@ -12,6 +14,8 @@ class CatalogWrapper(object):
         self.has_matching_format = bool(has_matching_format)
         self.iterator = None
         self.cache = None
+        self.id_argsort = None
+
 
 class CompositeCatalog(BaseGenericCatalog):
 
@@ -37,7 +41,6 @@ class CompositeCatalog(BaseGenericCatalog):
             if name is None or instance is None:
                 raise ValueError('catalog_instances and catalog_names need to have same length')
             self.catalogs.append(CatalogWrapper(instance, name))
-
 
         if len(self.catalogs) < 2:
             raise ValueError('need to have more than one catalogs to make a composite!')
@@ -73,7 +76,6 @@ class CompositeCatalog(BaseGenericCatalog):
     def _generate_native_quantity_list(self):
         return list(self._quantity_modifiers.values())
 
-
     def _obtain_native_data_dict(self, native_quantities_needed, native_quantity_getter):
 
         native_quantities_needed_dict = defaultdict(list)
@@ -87,6 +89,8 @@ class CompositeCatalog(BaseGenericCatalog):
 
         data = dict()
         for catalog in self.catalogs:
+            if catalog.name not in native_quantities_needed_dict:
+                continue
             if catalog.has_matching_format:
                 for q, v in catalog.instance._obtain_native_data_dict(
                     native_quantities_needed_dict[catalog.name],
@@ -97,7 +101,24 @@ class CompositeCatalog(BaseGenericCatalog):
                 catalog.cache = catalog.instance.get_quantities(
                     native_quantities_needed_dict[catalog.name],
                 )
-            #FIXME: this is not done!!
+                catalog.id_argsort = catalog.cache[self.matching_column_name].argsort()
+
+        for catalog in self.catalogs:
+            if catalog.name not in native_quantities_needed_dict or catalog.has_matching_format:
+                continue
+            s = np.searchsorted(
+                a=catalog.cache[self.matching_column_name],
+                v=data[(self.master_catalog.name, self.matching_column_name)],
+                sorter=catalog.id_argsort,
+            )
+            matching_idx = catalog.id_argsort[s]
+            matching_mask = catalog.cache[self.matching_column_name][matching_idx] == data[(self.master_catalog.name, self.matching_column_name)]
+
+            for q in native_quantities_needed_dict[catalog.name]:
+                data_this = catalog.cache[q][matching_idx]
+                data_this[matching_mask] = np.nan #FIXME
+                data[(catalog.name, q)] = data_this
+
         return data
 
     def _iter_native_dataset(self, native_filters=None):
