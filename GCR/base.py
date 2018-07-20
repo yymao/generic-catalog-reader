@@ -1,63 +1,16 @@
 """
 Contains the base class for a generic catalog (BaseGenericCatalog).
 """
-__all__ = ['BaseGenericCatalog', 'dict_to_numpy_array', 'GCRQuery']
-__version__ = '0.7.2'
-__author__ = 'Yao-Yuan Mao'
-
 import warnings
 from collections import defaultdict
 import numpy as np
-from numpy.core.records import fromarrays
-import easyquery
+from .query import GCRQuery
+from .utils import is_string_like
 
-
-def _is_string_like(obj):
-    """
-    Check whether obj behaves like a string.
-    """
-    try:
-        obj + ''
-    except (TypeError, ValueError):
-        return False
-    return True
-
-
-class GCRQuery(easyquery.Query):
-    @staticmethod
-    def _get_table_len(table):
-        try:
-            return len(next(iter(table.values())))
-        except StopIteration:
-            return 0
-
-    @staticmethod
-    def _mask_table(table, mask):
-        return {k: v[mask] for k, v in table.items()}
-
-    @staticmethod
-    def _check_basic_query(basic_query):
-        return basic_query is None or _is_string_like(basic_query) or \
-                (isinstance(basic_query, tuple) and \
-                len(basic_query) > 1 and callable(basic_query[0]))
-
-    def check_scalar(self, scalar_dict):
-        """
-        check if `scalar_dict` satisfy query
-        """
-        table = {k: np.array([v]) for k, v in scalar_dict.items()}
-        return self.mask(table)[0]
-
+__all__ = ['BaseGenericCatalog']
 
 def _trivial_callable(x):
     return x
-
-
-def dict_to_numpy_array(d):
-    """
-    Convert a dict of 1d array to a numpy recarray
-    """
-    return fromarrays(d.values(), np.dtype([(str(k), v.dtype) for k, v in d.items()]))
 
 
 class BaseGenericCatalog(object):
@@ -439,7 +392,7 @@ class BaseGenericCatalog(object):
 
 
     def _preprocess_requested_quantities(self, quantities):
-        if _is_string_like(quantities):
+        if is_string_like(quantities):
             quantities = {quantities}
 
         quantities = set(quantities)
@@ -456,7 +409,7 @@ class BaseGenericCatalog(object):
             pass
         elif not filters:
             filters = GCRQuery()
-        elif _is_string_like(filters):
+        elif is_string_like(filters):
             filters = GCRQuery(filters)
         else:
             filters = GCRQuery(*filters)
@@ -470,9 +423,9 @@ class BaseGenericCatalog(object):
         if self.native_filter_string_only:
             if not native_filters:
                 return None
-            if _is_string_like(native_filters):
+            if is_string_like(native_filters):
                 return (native_filters,)
-            if not all(_is_string_like(f) for f in native_filters):
+            if not all(is_string_like(f) for f in native_filters):
                 raise ValueError('`native_filters` is not set correctly. Must be None or a list of strings.')
             return tuple(native_filters)
 
@@ -480,7 +433,7 @@ class BaseGenericCatalog(object):
             pass
         elif not native_filters:
             native_filters = None
-        elif _is_string_like(native_filters):
+        elif is_string_like(native_filters):
             native_filters = GCRQuery(native_filters)
         else:
             native_filters = GCRQuery(*native_filters)

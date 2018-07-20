@@ -36,6 +36,6 @@ setup(
         'Programming Language :: Python :: 3.6',
     ],
     keywords='GCR catalog reader',
-    py_modules=['GCR'],
+    packages=['GCR'],
     install_requires=['numpy', 'easyquery>=0.1.3'],
 )
