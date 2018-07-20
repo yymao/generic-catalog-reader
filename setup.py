@@ -11,11 +11,8 @@ http://opensource.org/licenses/MIT
 import os
 from setuptools import setup
 
-with open(os.path.join(os.path.dirname(__file__), 'GCR.py')) as f:
-    for l in f:
-        if l.startswith('__version__ = '):
-            exec(l) #pylint: disable=W0122
-            break
+with open(os.path.join(os.path.dirname(__file__), 'GCR', 'version.py')) as f:
+    exec(f.read()) #pylint: disable=W0122
 
 setup(
     name='GCR',
