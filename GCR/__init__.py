@@ -1,5 +1,5 @@
 from .base import *
-#from .composite import *
+from .composite import *
 from .query import *
 from .utils import *
 from .version import __version__
