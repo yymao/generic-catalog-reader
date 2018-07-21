@@ -112,11 +112,12 @@ class CompositeCatalog(BaseGenericCatalog):
                 sorter=catalog.id_argsort,
             )
             matching_idx = catalog.id_argsort[s]
-            matching_mask = catalog.cache[self.matching_column_name][matching_idx] == data[(self.master_catalog.name, self.matching_column_name)]
+            not_matched_mask = catalog.cache[self.matching_column_name][matching_idx] != data[(self.master_catalog.name, self.matching_column_name)]
 
             for q in native_quantities_needed_dict[catalog.name]:
                 data_this = catalog.cache[q][matching_idx]
-                data_this[matching_mask] = np.nan #FIXME
+                if not_matched_mask.any():
+                    data_this = np.ma.array(data_this, mask=not_matched_mask)
                 data[(catalog.name, q)] = data_this
 
         return data
