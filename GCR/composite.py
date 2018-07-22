@@ -69,13 +69,16 @@ class CompositeCatalog(BaseGenericCatalog):
         self._native_filter_quantities = self.master_catalog.instance._native_filter_quantities
         self.native_filter_string_only = self.master_catalog.instance.native_filter_string_only
 
+        self._native_quantities = set()
         self._quantity_modifiers = dict()
         for catalog in self.catalogs:
             for q in catalog.instance.list_all_quantities(True):
-                self._quantity_modifiers[q] = (catalog.name, q)
+                key = (catalog.name, q)
+                self._native_quantities.add(key)
+                self._quantity_modifiers[q] = key
 
     def _generate_native_quantity_list(self):
-        return list(self._quantity_modifiers.values())
+        return self._native_quantities
 
     def _obtain_native_data_dict(self, native_quantities_needed, native_quantity_getter):
 
