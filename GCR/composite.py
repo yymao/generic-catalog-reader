@@ -50,6 +50,7 @@ class CompositeCatalog(BaseGenericCatalog):
             if catalog.name == self.master_catalog.name:
                 catalog.is_master = True
                 catalog.has_matching_format = True
+                continue
             if self.master_catalog.name not in getattr(catalog.instance, 'composite_compatible', []):
                 if allow_unsafe_match:
                     warnings.warn('it\'s not safe to join these catalogs but I\'ll do it anyways')
