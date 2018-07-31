@@ -347,7 +347,7 @@ class BaseGenericCatalog(object):
         """
         return list(self._native_filter_quantities)
 
-    def _get_quantity_info_dict(self, quantity, default=None):
+    def _get_quantity_info_dict(self, quantity, default=None): # pylint: disable=W0613
         """
         To be implemented by subclass.
         Must return a dictionary for existing quantity.
