@@ -106,7 +106,7 @@ class CompositeCatalog(BaseGenericCatalog):
                 self._native_quantities.add(key)
                 self._quantity_modifiers[q] = key
 
-        super(CompositeCatalog, self).__init__(self, **kwargs)
+        super(CompositeCatalog, self).__init__(**kwargs)
 
     def _subclass_init(self, **kwargs):
         pass
