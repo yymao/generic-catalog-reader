@@ -42,7 +42,6 @@ class BaseGenericCatalog(object):
         # to check if all native quantities in the modifiers are present
         self._check_quantities_exist(self.list_all_quantities(True), raise_exception=False)
 
-
     def get_quantities(self, quantities, filters=None, native_filters=None, return_iterator=False):
         """
         Fetch quantities from this catalog.
@@ -341,6 +340,12 @@ class BaseGenericCatalog(object):
         if quantity in self._quantity_modifiers:
             del self._quantity_modifiers[quantity]
 
+    @property
+    def native_filter_quantities(self):
+        """
+        quantities that can be used in native filters
+        """
+        return list(self._native_filter_quantities)
 
     def _get_quantity_info_dict(self, quantity, default=None):
         """
