@@ -50,9 +50,52 @@ class CompositeCatalog(BaseGenericCatalog):
 
     Parameters
     ----------
-    catalog_instances : list or tuple
-    catalog_identifiers : list or tuple, or None
+    catalog_instances : list/tuple of GCR.BaseGenericCatalog instances
+        The first element of `catalog_instances` is the master catalog,
+        with the subsequent elements the "add-on" catalogs that will overwrite
+        the columns of the master catlog.
+
+    catalog_identifiers : list/tuple of string, or None
+        A list/tuple of identifiers that correspond to `catalog_instances`.
+        Each identifier is usually a string.
+        Should have the same length as `catalog_instances`.
+        If set to `None`, the identifiers will be '_0', '_1', etc.
+
     matching_methods : list or tuple, or None
+        A list/tuple of matching methods that correspond to `catalog_instances`.
+        Each matching method can be either a column name (usually a string),
+        `MATCHING_FORMAT`, or `MATCHING_ORDER`.
+        If set to `MATCHING_FORMAT`, the reader assumes the catalog instance has
+        *exactly* the same underlying data format (i.e., same row order,
+        same iteration over data chucks, and same native filters).
+        If set to `MATCHING_ORDER`, the reader assumes the catalog instance has
+        the same row order but may not have the same iteration over data chunks.
+        If set to a string, the reader will use that column to match to the
+        master catalog and do a left join.
+
+    Example
+    -------
+    >>> cat0.list_all_quantities()
+    ['a', 'b', 'c', 'd']
+    >>> cat1.list_all_quantities()
+    ['a', 'b', 'e']
+    >>> cat2.list_all_quantities()
+    ['a', 'c', 'f']
+
+    >>> cc = CompositeCatalog([cat0, cat1, cat2])
+
+    >>> cc.get_quantity_modifier('a')
+    ('_2', 'a')
+    >>> cc.get_quantity_modifier('b')
+    ('_1', 'b')
+    >>> cc.get_quantity_modifier('c')
+    ('_2', 'c')
+    >>> cc.get_quantity_modifier('d')
+    ('_0', 'd')
+    >>> cc.get_quantity_modifier('e')
+    ('_1', 'e')
+    >>> cc.get_quantity_modifier('f')
+    ('_2', 'f')
     """
     def __init__(self, catalog_instances, catalog_identifiers=None, matching_methods=None, **kwargs):
 
