@@ -1,142 +1,195 @@
-import warnings
+"""
+Composite catalog reader
+"""
 from collections import defaultdict
+from itertools import zip_longest
 import numpy as np
 from .base import BaseGenericCatalog
 
-__all__ = ['CompositeCatalog']
+__all__ = ['CompositeCatalog', 'MATCHING_FORMAT', 'MATCHING_ORDER']
+
+# define module constants to be used in matching_columns
+MATCHING_FORMAT = None
+MATCHING_ORDER = tuple()
 
 
 class CatalogWrapper(object):
-    def __init__(self, instance, name, is_master=False, has_matching_format=False):
+    """
+    A simple wrapper to enhance code readability
+    """
+    def __init__(self, instance, identifier, matching_method, is_master):
         self.instance = instance
-        self.name = name
+        self.identifier = identifier
+        self.matching_method = matching_method
+        self.matching_column = matching_method
+        self.matching_format = (matching_method == MATCHING_FORMAT)
+        self.matching_order = (matching_method == MATCHING_ORDER)
         self.is_master = bool(is_master)
-        self.has_matching_format = bool(has_matching_format)
+        if self.matching_format or self.matching_order or self.is_master:
+            self.need_index_matching = False
+        else:
+            self.need_index_matching = True
         self.iterator = None
         self.cache = None
-        self.id_argsort = None
+        self.sorter = None
+        self.counter = None
+
+    def clear(self):
+        """
+        clear cache
+        """
+        self.iterator = None
+        self.cache = None
+        self.sorter = None
+        self.counter = None
 
 
 class CompositeCatalog(BaseGenericCatalog):
+    """
+    Composite Catalog
 
-    def _subclass_init(
-            self,
-            catalog_instances,
-            catalog_names=None,
-            matching_column_name=None,
-            allow_unsafe_match=False,
-            **kwargs
-    ):
+    Parameters
+    ----------
+    catalog_instances : list or tuple
+    catalog_identifiers : list or tuple, or None
+    matching_methods : list or tuple, or None
+    """
+    def __init__(self, catalog_instances, catalog_identifiers=None, matching_methods=None, **kwargs):
 
-        if catalog_names is None:
-            catalog_names = ['catalog_{}'.format(i) for i in range(len(catalog_instances))]
+        self._catalogs = list()
+        for i, (instance, identifier, matching_method) in enumerate(
+                zip_longest(
+                    catalog_instances,
+                    catalog_identifiers or [],
+                    matching_methods or [],
+                )):
+            self._catalogs.append(
+                CatalogWrapper(
+                    instance,
+                    identifier or '_{}'.format(i),
+                    matching_method or MATCHING_FORMAT,
+                    is_master=(i == 0),
+                ))
+        self._catalogs = tuple(self._catalogs)
+
+        # check number of catalogs
+        if len(self._catalogs) < 2:
+            raise ValueError('Must have more than one catalogs to make a composite catalog!')
+
+        # check uniqueness of identifiers
+        identifiers = [cat.identifier for cat in self._catalogs]
+        if len(set(identifiers)) != len(identifiers):
+            raise ValueError('Catalog identifiers need to be all distinct!')
+
+        # create handy attributes for the master catalog
+        self._master = self._catalogs[0]
+        self.master = self._master.instance  # for users' convenience
+
+        # check if it's possbile to do index matching
+        if any(cat.need_index_matching for cat in self._catalogs[1:]):
+            self._need_index_matching = True
+            if not self._master.matching_column:
+                raise ValueError('Must specify the column for the master catalog to do catalog matching!')
         else:
-            catalog_names = list(map(str, catalog_names))
+            self._need_index_matching = False
 
-        if len(set(catalog_names)) != len(catalog_names):
-            raise ValueError('catalog names need to be all distinct!')
+        self._need_order_matching = any(cat.matching_order for cat in self._catalogs[1:])
 
-        self.catalogs = list()
-        for name, instance in zip(map(str, catalog_names), catalog_instances):
-            if name is None or instance is None:
-                raise ValueError('catalog_instances and catalog_names need to have same length')
-            self.catalogs.append(CatalogWrapper(instance, name))
-
-        if len(self.catalogs) < 2:
-            raise ValueError('need to have more than one catalogs to make a composite!')
-
-        self.master_catalog = self.catalogs[0]
-        for catalog in self.catalogs:
-            if catalog.name == self.master_catalog.name:
-                catalog.is_master = True
-                catalog.has_matching_format = True
-                continue
-            if self.master_catalog.name not in getattr(catalog.instance, 'composite_compatible', []):
-                if allow_unsafe_match:
-                    warnings.warn('it\'s not safe to join these catalogs but I\'ll do it anyways')
-                else:
-                    raise ValueError('Not a valid match! {} it not an allowed master catalog for {}'.format(self.master_catalog.name, catalog.name))
-            if self.master_catalog.name in getattr(catalog.instance, 'composite_matched_format', []):
-                catalog.has_matching_format = True
-
-        if all(catalog.has_matching_format for catalog in self.catalogs):
-            self.matching_column_name = None
-        else:
-            self.matching_column_name = matching_column_name
-            if not self.matching_column_name:
-                raise ValueError('matching_column_name cannot be None or empty')
-
-        self._native_filter_quantities = self.master_catalog.instance._native_filter_quantities
-        self.native_filter_string_only = self.master_catalog.instance.native_filter_string_only
+        self._native_filter_quantities = set(self.master.native_filter_quantities)
+        self.native_filter_string_only = self.master.native_filter_string_only
 
         self._native_quantities = set()
         self._quantity_modifiers = dict()
-        for catalog in self.catalogs:
+        for catalog in self._catalogs:
             for q in catalog.instance.list_all_quantities(True):
-                key = (catalog.name, q)
+                key = (catalog.identifier, q)
                 self._native_quantities.add(key)
                 self._quantity_modifiers[q] = key
+
+        super(CompositeCatalog, self).__init__(self, **kwargs)
+
+    def _subclass_init(self, **kwargs):
+        pass
 
     def _generate_native_quantity_list(self):
         return self._native_quantities
 
     def _obtain_native_data_dict(self, native_quantities_needed, native_quantity_getter):
+        native_quantities_needed_dict = defaultdict(set)
+        for identifier, quantity in native_quantities_needed:
+            native_quantities_needed_dict[identifier].add(quantity)
 
-        native_quantities_needed_dict = defaultdict(list)
-        for name, q in native_quantities_needed:
-            native_quantities_needed_dict[name].append(q)
+        if self._need_index_matching:
+            for catalog in self._catalogs:
+                if catalog.is_master or catalog.need_index_matching:
+                    native_quantities_needed_dict[catalog.identifier].add(catalog.matching_column)
 
-        if self.matching_column_name:
-            for catalog in self.catalogs:
-                if catalog.is_master or not catalog.has_matching_format:
-                    native_quantities_needed_dict[catalog.name].append(self.matching_column_name)
+        master_dummy_column = None
+        if self._need_order_matching:
+            if native_quantities_needed_dict[self._master.identifier]:
+                master_dummy_column = list(native_quantities_needed_dict[self._master.identifier]).pop()
+            else:
+                master_dummy_column = list(self.master.list_all_quantities(True)).pop()
+                native_quantities_needed_dict[self._master.identifier].add(master_dummy_column)
 
         data = dict()
-        for catalog in self.catalogs:
-            if catalog.name not in native_quantities_needed_dict:
+        for catalog in self._catalogs:
+            if catalog.identifier not in native_quantities_needed_dict:
                 continue
-            if catalog.has_matching_format:
-                for q, v in catalog.instance._obtain_native_data_dict(
-                    native_quantities_needed_dict[catalog.name],
-                    native_quantity_getter[catalog.name]
+            if catalog.matching_format:
+                if native_quantity_getter.get(catalog.identifier) is None:
+                    raise RuntimeError('Catalog {} does not have matching format!'.format(catalog.identifier))
+                for q, v in catalog.instance._obtain_native_data_dict( # pylint: disable=W0212
+                        native_quantities_needed_dict[catalog.identifier],
+                        native_quantity_getter[catalog.identifier],
                 ).items():
-                    data[(catalog.name, q)] = v
+                    data[(catalog.identifier, q)] = v
             elif catalog.cache is None:
-                catalog.cache = catalog.instance.get_quantities(
-                    native_quantities_needed_dict[catalog.name],
-                )
-                catalog.id_argsort = catalog.cache[self.matching_column_name].argsort()
+                catalog.cache = catalog.instance.get_quantities(native_quantities_needed_dict[catalog.identifier], )
+                if catalog.matching_order:
+                    catalog.counter = 0
+                else:
+                    catalog.sorter = catalog.cache[catalog.matching_column].argsort()
 
-        for catalog in self.catalogs:
-            if catalog.name not in native_quantities_needed_dict or catalog.has_matching_format:
+        for catalog in self._catalogs:
+            if catalog.identifier not in native_quantities_needed_dict or catalog.matching_format:
                 continue
-            s = np.searchsorted(
-                a=catalog.cache[self.matching_column_name],
-                v=data[(self.master_catalog.name, self.matching_column_name)],
-                sorter=catalog.id_argsort,
-            )
-            matching_idx = catalog.id_argsort[s]
-            not_matched_mask = catalog.cache[self.matching_column_name][matching_idx] != data[(self.master_catalog.name, self.matching_column_name)]
 
-            for q in native_quantities_needed_dict[catalog.name]:
+            if catalog.matching_order:
+                count = len(data[(self._master.identifier, master_dummy_column)])
+                slice_this = slice(catalog.counter, catalog.counter + count)
+                catalog.counter += count
+                for q in native_quantities_needed_dict[catalog.identifier]:
+                    data_this = catalog.cache[q][slice_this]
+                    data[(catalog.identifier, q)] = data_this
+                continue
+
+            s = np.searchsorted(
+                a=catalog.cache[catalog.matching_column],
+                v=data[(self._master.identifier, self._master.matching_column)],
+                sorter=catalog.sorter,
+            )
+            matching_idx = catalog.sorter[s]
+            not_matched_mask = (catalog.cache[catalog.matching_column][matching_idx] !=
+                                data[(self._master.identifier, self._master.matching_column)])
+
+            for q in native_quantities_needed_dict[catalog.identifier]:
                 data_this = catalog.cache[q][matching_idx]
                 if not_matched_mask.any():
                     data_this = np.ma.array(data_this, mask=not_matched_mask)
-                data[(catalog.name, q)] = data_this
+                data[(catalog.identifier, q)] = data_this
 
         return data
 
     def _iter_native_dataset(self, native_filters=None):
+        for catalog in self._catalogs:
+            catalog.clear()
+            if catalog.matching_format:
+                catalog.iterator = catalog.instance._iter_native_dataset(native_filters) # pylint: disable=W0212
 
-        for catalog in self.catalogs:
-            if catalog.has_matching_format:
-                catalog.iterator = catalog.instance._iter_native_dataset(native_filters)
-            else:
-                catalog.cache = None
-
-        for master_data in self.master_catalog.iterator:
-            dataset = {self.master_catalog.name: master_data}
-            for catalog in self.catalogs[1:]:
-                if catalog.has_matching_format:
-                    dataset[catalog.name] = next(catalog.iterator)
+        for master_data in self._master.iterator:
+            dataset = {self._master.identifier: master_data}
+            for catalog in self._catalogs[1:]:
+                if catalog.matching_format:
+                    dataset[catalog.identifier] = next(catalog.iterator, None)
             yield dataset
