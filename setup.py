@@ -11,11 +11,8 @@ http://opensource.org/licenses/MIT
 import os
 from setuptools import setup
 
-with open(os.path.join(os.path.dirname(__file__), 'GCR.py')) as f:
-    for l in f:
-        if l.startswith('__version__ = '):
-            exec(l) #pylint: disable=W0122
-            break
+with open(os.path.join(os.path.dirname(__file__), 'GCR', 'version.py')) as f:
+    exec(f.read()) #pylint: disable=W0122
 
 setup(
     name='GCR',
@@ -32,10 +29,9 @@ setup(
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.6',
     ],
     keywords='GCR catalog reader',
-    py_modules=['GCR'],
+    packages=['GCR'],
     install_requires=['numpy', 'easyquery>=0.1.3'],
 )

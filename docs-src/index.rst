@@ -6,14 +6,14 @@
 
 Generic Catalog Reader (GCR)
 ============================
-.. automodule:: GCR
-
 .. autoclass:: GCR.BaseGenericCatalog
    :members:
    :private-members:
 
-.. autofunction:: GCR.dict_to_numpy_array
+.. autoclass:: GCR.CompositeCatalog
+   :show-inheritance:
 
 .. autoclass:: GCR.GCRQuery
-   :members:
    :show-inheritance:
+
+.. autofunction:: GCR.dict_to_numpy_array

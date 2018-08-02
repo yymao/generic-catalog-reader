@@ -1,64 +1,13 @@
 """
 Contains the base class for a generic catalog (BaseGenericCatalog).
 """
-__all__ = ['BaseGenericCatalog', 'dict_to_numpy_array', 'GCRQuery']
-__version__ = '0.7.2'
-__author__ = 'Yao-Yuan Mao'
-
 import warnings
 from collections import defaultdict
 import numpy as np
-from numpy.core.records import fromarrays
-import easyquery
+from .query import GCRQuery
+from .utils import is_string_like, trivial_callable
 
-
-def _is_string_like(obj):
-    """
-    Check whether obj behaves like a string.
-    """
-    try:
-        obj + ''
-    except (TypeError, ValueError):
-        return False
-    return True
-
-
-class GCRQuery(easyquery.Query):
-    @staticmethod
-    def _get_table_len(table):
-        try:
-            return len(next(iter(table.values())))
-        except StopIteration:
-            return 0
-
-    @staticmethod
-    def _mask_table(table, mask):
-        return {k: v[mask] for k, v in table.items()}
-
-    @staticmethod
-    def _check_basic_query(basic_query):
-        return basic_query is None or _is_string_like(basic_query) or \
-                (isinstance(basic_query, tuple) and \
-                len(basic_query) > 1 and callable(basic_query[0]))
-
-    def check_scalar(self, scalar_dict):
-        """
-        check if `scalar_dict` satisfy query
-        """
-        table = {k: np.array([v]) for k, v in scalar_dict.items()}
-        return self.mask(table)[0]
-
-
-def _trivial_callable(x):
-    return x
-
-
-def dict_to_numpy_array(d):
-    """
-    Convert a dict of 1d array to a numpy recarray
-    """
-    return fromarrays(d.values(), np.dtype([(str(k), v.dtype) for k, v in d.items()]))
-
+__all__ = ['BaseGenericCatalog']
 
 class BaseGenericCatalog(object):
     """
@@ -88,7 +37,6 @@ class BaseGenericCatalog(object):
 
         # to check if all native quantities in the modifiers are present
         self._check_quantities_exist(self.list_all_quantities(True), raise_exception=False)
-
 
     def get_quantities(self, quantities, filters=None, native_filters=None, return_iterator=False):
         """
@@ -128,7 +76,6 @@ class BaseGenericCatalog(object):
                 data_all[q].append(data[q])
         return {q: (np.concatenate(data_all[q]) if len(data_all[q]) > 1 else data_all[q][0]) for q in quantities}
 
-
     def has_quantity(self, quantity, include_native=True):
         """
         Check if *quantity* is available in this catalog
@@ -151,7 +98,6 @@ class BaseGenericCatalog(object):
             return all(q in self._native_quantities for q in self._translate_quantities({quantity}))
 
         return quantity in self._quantity_modifiers
-
 
     def has_quantities(self, quantities, include_native=True):
         """
@@ -177,7 +123,6 @@ class BaseGenericCatalog(object):
 
         return all(q in self._quantity_modifiers for q in quantities)
 
-
     def list_all_quantities(self, include_native=False, with_info=False):
         """
         Return a list of all available quantities in this catalog.
@@ -192,7 +137,6 @@ class BaseGenericCatalog(object):
             q.update(self._native_quantities)
         return {k: self.get_quantity_info(k) for k in q} if with_info else list(q)
 
-
     def list_all_native_quantities(self, with_info=False):
         """
         Return a list of all available native quantities in this catalog.
@@ -203,7 +147,6 @@ class BaseGenericCatalog(object):
         """
         q = self._native_quantities
         return {k: self.get_quantity_info(k) for k in q} if with_info else list(q)
-
 
     def first_available(self, *quantities):
         """
@@ -216,7 +159,6 @@ class BaseGenericCatalog(object):
                     warnings.warn('{} not available; using {} instead'.format(quantities[0], q))
                 return q
 
-
     def get_input_kwargs(self, key=None, default=None):
         """
         Deprecated. Use `get_catalog_info` instead.
@@ -227,7 +169,6 @@ class BaseGenericCatalog(object):
         warnings.warn("`get_input_kwargs` is deprecated; use `get_catalog_info` instead.", DeprecationWarning)
         return self.get_catalog_info(key, default)
 
-
     def get_catalog_info(self, key=None, default=None):
         """
         Get information from the catalog config file.
@@ -237,7 +178,6 @@ class BaseGenericCatalog(object):
             return self._init_kwargs
 
         return self._init_kwargs.get(key, default)
-
 
     def get_quantity_info(self, quantity, key=None, default=None):
         """
@@ -250,7 +190,6 @@ class BaseGenericCatalog(object):
             return d
 
         return d.get(key, default)
-
 
     def add_quantity_modifier(self, quantity, modifier, overwrite=False):
         """
@@ -277,7 +216,6 @@ class BaseGenericCatalog(object):
         self._quantity_modifiers[quantity] = modifier
         self._check_quantities_exist([quantity], raise_exception=False)
 
-
     def get_quantity_modifier(self, quantity):
         """
         Retrive a quantify modifier.
@@ -292,7 +230,6 @@ class BaseGenericCatalog(object):
         quantity_modifier
         """
         return self._quantity_modifiers.get(quantity, self._default_quantity_modifier)
-
 
     def get_normalized_quantity_modifier(self, quantity):
         """
@@ -311,7 +248,7 @@ class BaseGenericCatalog(object):
         """
         modifier = self._quantity_modifiers.get(quantity, self._default_quantity_modifier)
         if modifier is None:
-            return (_trivial_callable, quantity)
+            return (trivial_callable, quantity)
 
         if callable(modifier):
             return (modifier, quantity)
@@ -319,8 +256,7 @@ class BaseGenericCatalog(object):
         if isinstance(modifier, (tuple, list)) and len(modifier) > 1 and callable(modifier[0]):
             return modifier
 
-        return (_trivial_callable, modifier)
-
+        return (trivial_callable, modifier)
 
     def add_derived_quantity(self, derived_quantity, func, *quantities):
         """
@@ -367,14 +303,12 @@ class BaseGenericCatalog(object):
 
         self.add_quantity_modifier(derived_quantity, new_modifier)
 
-
     def add_modifier_on_derived_quantities(self, new_quantity, func, *quantities):
         """
         Deprecated. Use `add_derived_quantity` instead.
         """
         warnings.warn("Use `add_derived_quantity` instead.", DeprecationWarning)
         self.add_derived_quantity(new_quantity, func, *quantities)
-
 
     def del_quantity_modifier(self, quantity):
         """
@@ -388,15 +322,20 @@ class BaseGenericCatalog(object):
         if quantity in self._quantity_modifiers:
             del self._quantity_modifiers[quantity]
 
+    @property
+    def native_filter_quantities(self):
+        """
+        quantities that can be used in native filters
+        """
+        return list(self._native_filter_quantities)
 
-    def _get_quantity_info_dict(self, quantity, default=None):
+    def _get_quantity_info_dict(self, quantity, default=None): # pylint: disable=W0613
         """
         To be implemented by subclass.
         Must return a dictionary for existing quantity.
         For non-existing quantity must return default.
         """
         return default
-
 
     def _translate_quantity(self, quantity_requested, native_quantities_needed=None):
         if native_quantities_needed is None:
@@ -416,7 +355,6 @@ class BaseGenericCatalog(object):
 
         return native_quantities_needed
 
-
     def _translate_quantities(self, quantities_requested):
         native_quantities_needed = defaultdict(list)
 
@@ -424,7 +362,6 @@ class BaseGenericCatalog(object):
             self._translate_quantity(q, native_quantities_needed)
 
         return native_quantities_needed
-
 
     def _check_quantities_exist(self, quantities_requested, raise_exception=False):
         for native_quantity, quantities in self._translate_quantities(quantities_requested).items():
@@ -437,9 +374,8 @@ class BaseGenericCatalog(object):
                     return False
         return True
 
-
     def _preprocess_requested_quantities(self, quantities):
-        if _is_string_like(quantities):
+        if is_string_like(quantities):
             quantities = {quantities}
 
         quantities = set(quantities)
@@ -450,13 +386,12 @@ class BaseGenericCatalog(object):
 
         return quantities
 
-
     def _preprocess_filters(self, filters):
         if isinstance(filters, GCRQuery):
             pass
         elif not filters:
             filters = GCRQuery()
-        elif _is_string_like(filters):
+        elif is_string_like(filters):
             filters = GCRQuery(filters)
         else:
             filters = GCRQuery(*filters)
@@ -465,14 +400,13 @@ class BaseGenericCatalog(object):
 
         return filters
 
-
     def _preprocess_native_filters(self, native_filters):
         if self.native_filter_string_only:
             if not native_filters:
                 return None
-            if _is_string_like(native_filters):
+            if is_string_like(native_filters):
                 return (native_filters,)
-            if not all(_is_string_like(f) for f in native_filters):
+            if not all(is_string_like(f) for f in native_filters):
                 raise ValueError('`native_filters` is not set correctly. Must be None or a list of strings.')
             return tuple(native_filters)
 
@@ -480,7 +414,7 @@ class BaseGenericCatalog(object):
             pass
         elif not native_filters:
             native_filters = None
-        elif _is_string_like(native_filters):
+        elif is_string_like(native_filters):
             native_filters = GCRQuery(native_filters)
         else:
             native_filters = GCRQuery(*native_filters)
@@ -490,7 +424,6 @@ class BaseGenericCatalog(object):
             raise ValueError('Not all quantities in `native_filters` can be used in native filters!')
 
         return native_filters
-
 
     def _assemble_quantity(self, quantity_requested, native_quantities_loaded):
         modifier = self._quantity_modifiers.get(quantity_requested, self._default_quantity_modifier)
@@ -506,7 +439,6 @@ class BaseGenericCatalog(object):
 
         return native_quantities_loaded[modifier]
 
-
     @staticmethod
     def _obtain_native_data_dict(native_quantities_needed, native_quantity_getter):
         """
@@ -519,12 +451,10 @@ class BaseGenericCatalog(object):
         """
         return {q: native_quantity_getter(q) for q in native_quantities_needed}
 
-
     def _load_quantities(self, quantities, native_quantity_getter):
         native_quantities_needed = self._translate_quantities(quantities)
         native_data = self._obtain_native_data_dict(native_quantities_needed, native_quantity_getter)
         return {q: self._assemble_quantity(q, native_data) for q in quantities}
-
 
     def _get_quantities_iter(self, quantities, filters, native_filters):
         for native_quantity_getter in self._iter_native_dataset(native_filters):
@@ -536,10 +466,12 @@ class BaseGenericCatalog(object):
             yield data
             del data
 
-
     def __getitem__(self, key):
         return self.get_quantities([key])[key]
 
+    def __len__(self):
+        key = next(iter(self._native_quantities))
+        return len(self[key])
 
     def _subclass_init(self, **kwargs):
         """
@@ -550,14 +482,12 @@ class BaseGenericCatalog(object):
         """
         raise NotImplementedError
 
-
     def _generate_native_quantity_list(self):
         """
         To be implemented by subclass.
         Must return an iterable of all native quantity names.
         """
         raise NotImplementedError
-
 
     def _iter_native_dataset(self, native_filters=None):
         """
