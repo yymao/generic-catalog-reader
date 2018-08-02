@@ -24,12 +24,12 @@ class CatalogWrapper(object):
     def __init__(self, instance, identifier, matching_method, is_master):
         self.instance = instance
         self.identifier = identifier
+        self.is_master = bool(is_master)
         self.matching_method = matching_method
         self.matching_column = matching_method
-        self.matching_format = (matching_method == MATCHING_FORMAT)
+        self.matching_format = (matching_method == MATCHING_FORMAT) or self.is_master
         self.matching_order = (matching_method == MATCHING_ORDER)
-        self.is_master = bool(is_master)
-        if self.matching_format or self.matching_order or self.is_master:
+        if self.matching_format or self.matching_order:
             self.need_index_matching = False
         else:
             self.need_index_matching = True
