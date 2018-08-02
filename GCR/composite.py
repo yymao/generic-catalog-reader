@@ -1,6 +1,7 @@
 """
 Composite catalog reader
 """
+import warnings
 from collections import defaultdict
 from itertools import zip_longest
 import numpy as np
@@ -98,7 +99,7 @@ class CompositeCatalog(BaseGenericCatalog):
     ('_2', 'f')
     """
     def __init__(self, catalog_instances, catalog_identifiers=None, matching_methods=None, **kwargs):
-
+        warnings.warn('CompositeCatalog is still an experimental feature. Use with care!')
         self._catalogs = list()
         for i, (instance, identifier, matching_method) in enumerate(
                 zip_longest(

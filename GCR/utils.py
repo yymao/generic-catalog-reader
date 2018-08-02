@@ -1,3 +1,6 @@
+"""
+Utility module
+"""
 import numpy as np
 from numpy.core.records import fromarrays
 
@@ -12,6 +15,10 @@ def is_string_like(obj):
     except (TypeError, ValueError):
         return False
     return True
+
+def trivial_callable(x):
+    """return itself"""
+    return x
 
 def dict_to_numpy_array(d):
     """

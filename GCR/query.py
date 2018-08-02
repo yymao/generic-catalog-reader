@@ -1,9 +1,11 @@
+"""
+GCRQuery module (a subclass of easyquery.Query)
+"""
 import numpy as np
 import easyquery
 from .utils import is_string_like
 
 __all__ = ['GCRQuery']
-
 
 class GCRQuery(easyquery.Query):
     @staticmethod
