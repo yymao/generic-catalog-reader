@@ -3,7 +3,10 @@ Composite catalog reader
 """
 import warnings
 from collections import defaultdict
-from itertools import zip_longest
+try:
+    from itertools import zip_longest
+except ImportError:
+    from itertools import izip_longest as zip_longest
 import numpy as np
 from .base import BaseGenericCatalog
 
