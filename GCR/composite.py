@@ -24,12 +24,12 @@ class CatalogWrapper(object):
     def __init__(self, instance, identifier, matching_method, is_master):
         self.instance = instance
         self.identifier = identifier
+        self.is_master = bool(is_master)
         self.matching_method = matching_method
         self.matching_column = matching_method
-        self.matching_format = (matching_method == MATCHING_FORMAT)
+        self.matching_format = (matching_method == MATCHING_FORMAT) or self.is_master
         self.matching_order = (matching_method == MATCHING_ORDER)
-        self.is_master = bool(is_master)
-        if self.matching_format or self.matching_order or self.is_master:
+        if self.matching_format or self.matching_order:
             self.need_index_matching = False
         else:
             self.need_index_matching = True
@@ -186,7 +186,7 @@ class CompositeCatalog(BaseGenericCatalog):
             if catalog.matching_format:
                 if native_quantity_getter.get(catalog.identifier) is None:
                     raise RuntimeError('Catalog {} does not have matching format!'.format(catalog.identifier))
-                for q, v in catalog.instance._obtain_native_data_dict( # pylint: disable=W0212
+                for q, v in catalog.instance._load_quantities( # pylint: disable=W0212
                         native_quantities_needed_dict[catalog.identifier],
                         native_quantity_getter[catalog.identifier],
                 ).items():
