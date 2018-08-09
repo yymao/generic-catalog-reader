@@ -216,6 +216,7 @@ class CompositeCatalog(BaseGenericCatalog):
                 v=data[(self._master.identifier, self._master.matching_column)],
                 sorter=catalog.sorter,
             )
+            s[s >= len(catalog.sorter)] = -1
             matching_idx = catalog.sorter[s]
             not_matched_mask = (catalog.cache[catalog.matching_column][matching_idx] !=
                                 data[(self._master.identifier, self._master.matching_column)])
