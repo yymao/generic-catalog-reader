@@ -366,7 +366,7 @@ class BaseGenericCatalog(object):
     def _check_quantities_exist(self, quantities_requested, raise_exception=False):
         for native_quantity, quantities in self._translate_quantities(quantities_requested).items():
             if native_quantity not in self._native_quantities:
-                msg = 'Native quantity `{}` does not exist (required by `{}`)'.format(native_quantity, '`, `'.join(quantities))
+                msg = 'Native quantity `{}` does not exist (required by `{}`)'.format(native_quantity, '`, `'.join(map(str, quantities)))
                 if raise_exception:
                     raise ValueError(msg)
                 else:
