@@ -44,7 +44,6 @@ class CatalogWrapper(object):
         """
         self.iterator = None
         self.cache = None
-        self.sorter = None
         self.counter = None
 
 
@@ -192,10 +191,10 @@ class CompositeCatalog(BaseGenericCatalog):
                 ).items():
                     data[(catalog.identifier, q)] = v
             elif catalog.cache is None:
-                catalog.cache = catalog.instance.get_quantities(native_quantities_needed_dict[catalog.identifier], )
+                catalog.cache = catalog.instance.get_quantities(native_quantities_needed_dict[catalog.identifier])
                 if catalog.matching_order:
                     catalog.counter = 0
-                else:
+                elif catalog.sorter is None:
                     catalog.sorter = catalog.cache[catalog.matching_column].argsort()
 
         for catalog in self._catalogs:
