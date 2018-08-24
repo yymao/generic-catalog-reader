@@ -76,6 +76,11 @@ class CompositeCatalog(BaseGenericCatalog):
         If set to a string, the reader will use that column to match to the
         master catalog and do a left join.
 
+    only_use_master_attr : bool, optional (default: False)
+        If set to False, add-on catalogs will overwrite master catalog's
+        attributes just like how they overwrite quantities.
+        If set to True, only the master catalog's attributes are inherited.
+
     Example
     -------
     >>> cat0.list_all_quantities()
@@ -100,7 +105,8 @@ class CompositeCatalog(BaseGenericCatalog):
     >>> cc.get_quantity_modifier('f')
     ('_2', 'f')
     """
-    def __init__(self, catalog_instances, catalog_identifiers=None, matching_methods=None, **kwargs):
+    def __init__(self, catalog_instances, catalog_identifiers=None,
+                 matching_methods=None, only_use_master_attr=False, **kwargs):
         warnings.warn('CompositeCatalog is still an experimental feature. Use with care!')
         self._catalogs = list()
         for i, (instance, identifier, matching_method) in enumerate(
@@ -151,6 +157,8 @@ class CompositeCatalog(BaseGenericCatalog):
                 key = (catalog.identifier, q)
                 self._native_quantities.add(key)
                 self._quantity_modifiers[q] = key
+
+        self.only_use_master_attr = bool(only_use_master_attr)
 
         super(CompositeCatalog, self).__init__(**kwargs)
 
@@ -240,3 +248,10 @@ class CompositeCatalog(BaseGenericCatalog):
                 if catalog.matching_format:
                     dataset[catalog.identifier] = next(catalog.iterator, None)
             yield dataset
+
+    def __getattr__(self, name):
+        if not self.only_use_master_attr:
+            for catalog in reversed(self._catalogs):
+                if hasattr(catalog.instance, name):
+                    return getattr(catalog.instance, name)
+        return getattr(self.master, name)
