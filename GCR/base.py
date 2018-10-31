@@ -71,10 +71,19 @@ class BaseGenericCatalog(object):
             return it
 
         data_all = defaultdict(list)
+        count = 0
         for data in it:
             for q in quantities:
                 data_all[q].append(data[q])
-        return {q: (np.concatenate(data_all[q]) if len(data_all[q]) > 1 else data_all[q][0]) for q in quantities}
+            count += 1
+
+        if count == 0:
+            return {q: np.array([]) for q in quantities}
+
+        if count == 1:
+            return dict(data_all)
+
+        return {q: np.concatenate(data_all[q]) for q in quantities}
 
     def has_quantity(self, quantity, include_native=True):
         """
