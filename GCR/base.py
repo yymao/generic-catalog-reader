@@ -5,7 +5,7 @@ import warnings
 from collections import defaultdict
 import numpy as np
 from .query import GCRQuery
-from .utils import is_string_like, trivial_callable
+from .utils import is_string_like, trivial_callable, concatenate_1d
 
 __all__ = ['BaseGenericCatalog']
 
@@ -71,19 +71,10 @@ class BaseGenericCatalog(object):
             return it
 
         data_all = defaultdict(list)
-        count = 0
         for data in it:
             for q in quantities:
                 data_all[q].append(data[q])
-            count += 1
-
-        if count == 0:
-            return {q: np.array([]) for q in quantities}
-
-        if count == 1:
-            return dict(data_all)
-
-        return {q: np.concatenate(data_all[q]) for q in quantities}
+        return {q: concatenate_1d(data_all[q]) for q in quantities}
 
     def has_quantity(self, quantity, include_native=True):
         """
