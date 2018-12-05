@@ -36,5 +36,5 @@ def concatenate_1d(arrays):
     if len(arrays) == 1:
         return np.asanyarray(arrays[0])
     if any(map(np.ma.is_masked, arrays)):
-        np.ma.concatenate(arrays)
+        return np.ma.concatenate(arrays)
     return np.concatenate(arrays)
