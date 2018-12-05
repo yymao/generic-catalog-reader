@@ -27,8 +27,14 @@ def dict_to_numpy_array(d):
     return fromarrays(d.values(), np.dtype([(str(k), v.dtype) for k, v in d.items()]))
 
 def concatenate_1d(arrays):
+    """
+    Concatenate 1D numpy arrays.
+    Similar to np.concatenate but work with empty input and masked arrays.
+    """
     if len(arrays) == 0:
         return np.array([])
     if len(arrays) == 1:
-        return np.asarray(arrays[0])
+        return np.asanyarray(arrays[0])
+    if any(map(np.ma.is_masked, arrays)):
+        return np.ma.concatenate(arrays)
     return np.concatenate(arrays)
