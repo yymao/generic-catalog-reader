@@ -119,7 +119,7 @@ class CompositeCatalog(BaseGenericCatalog):
                 CatalogWrapper(
                     instance,
                     identifier or '_{}'.format(i),
-                    matching_method or MATCHING_FORMAT,
+                    matching_method,
                     is_master=(i == 0),
                 ))
         self._catalogs = tuple(self._catalogs)
