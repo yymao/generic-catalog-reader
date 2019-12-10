@@ -230,8 +230,7 @@ class CompositeCatalog(BaseGenericCatalog):
 
             for q in native_quantities_needed_dict[catalog.identifier]:
                 data_this = catalog.cache[q][matching_idx]
-                if not_matched_mask.any():
-                    data_this = np.ma.array(data_this, mask=not_matched_mask)
+                data_this = np.ma.array(data_this, mask=not_matched_mask)
                 data[(catalog.identifier, q)] = data_this
 
         return data
