@@ -81,6 +81,9 @@ class CompositeCatalog(BaseGenericCatalog):
         attributes just like how they overwrite quantities.
         If set to True, only the master catalog's attributes are inherited.
 
+    always_return_masked_array : bool, optional (default: False)
+        If set to True, always return masked array unless the catalogs have matching formats.
+
     Example
     -------
     >>> cat0.list_all_quantities()
@@ -106,7 +109,8 @@ class CompositeCatalog(BaseGenericCatalog):
     ('_2', 'f')
     """
     def __init__(self, catalog_instances, catalog_identifiers=None,
-                 matching_methods=None, only_use_master_attr=False, **kwargs):
+                 matching_methods=None, only_use_master_attr=False,
+                 always_return_masked_array=False, **kwargs):
         warnings.warn('CompositeCatalog is still an experimental feature. Use with care!')
         self._catalogs = list()
         for i, (instance, identifier, matching_method) in enumerate(
@@ -159,6 +163,7 @@ class CompositeCatalog(BaseGenericCatalog):
                 self._quantity_modifiers[q] = key
 
         self.only_use_master_attr = bool(only_use_master_attr)
+        self.always_return_masked_array = bool(always_return_masked_array)
 
         super(CompositeCatalog, self).__init__(**kwargs)
 
@@ -230,7 +235,8 @@ class CompositeCatalog(BaseGenericCatalog):
 
             for q in native_quantities_needed_dict[catalog.identifier]:
                 data_this = catalog.cache[q][matching_idx]
-                data_this = np.ma.array(data_this, mask=not_matched_mask)
+                if self.always_return_masked_array or not_matched_mask.any():
+                    data_this = np.ma.array(data_this, mask=not_matched_mask)
                 data[(catalog.identifier, q)] = data_this
 
         return data
