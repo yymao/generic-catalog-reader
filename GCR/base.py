@@ -3,11 +3,12 @@ Contains the base class for a generic catalog (BaseGenericCatalog).
 """
 import warnings
 from collections import defaultdict
-import numpy as np
+
 from .query import GCRQuery
 from .utils import is_string_like, trivial_callable, concatenate_1d
 
 __all__ = ['BaseGenericCatalog']
+
 
 class BaseGenericCatalog(object):
     """
@@ -288,14 +289,14 @@ class BaseGenericCatalog(object):
                 modifier = self.get_normalized_quantity_modifier(q)
                 functions.append(modifier[0])
                 quantities_needed.extend(modifier[1:])
-                quantity_count.append(len(modifier)-1)
+                quantity_count.append(len(modifier) - 1)
 
             def _new_func(*x):
                 assert len(x) == sum(quantity_count)
                 count_current = 0
                 new_args = []
                 for func_this, count in zip(functions, quantity_count):
-                    new_args.append(func_this(*x[count_current:count_current+count]))
+                    new_args.append(func_this(*x[count_current:(count_current + count)]))
                     count_current += count
                 return func(*new_args)
 
@@ -329,7 +330,7 @@ class BaseGenericCatalog(object):
         """
         return list(self._native_filter_quantities)
 
-    def _get_quantity_info_dict(self, quantity, default=None): # pylint: disable=W0613
+    def _get_quantity_info_dict(self, quantity, default=None):
         """
         To be implemented by subclass.
         Must return a dictionary for existing quantity.

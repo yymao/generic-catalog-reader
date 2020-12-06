@@ -198,7 +198,7 @@ class CompositeCatalog(BaseGenericCatalog):
             if catalog.matching_format:
                 if native_quantity_getter.get(catalog.identifier) is None:
                     raise RuntimeError('Catalog {} does not have matching format!'.format(catalog.identifier))
-                for q, v in catalog.instance._load_quantities( # pylint: disable=W0212
+                for q, v in catalog.instance._load_quantities(
                         native_quantities_needed_dict[catalog.identifier],
                         native_quantity_getter[catalog.identifier],
                 ).items():
@@ -245,7 +245,7 @@ class CompositeCatalog(BaseGenericCatalog):
         for catalog in self._catalogs:
             catalog.clear()
             if catalog.matching_format:
-                catalog.iterator = catalog.instance._iter_native_dataset(native_filters) # pylint: disable=W0212
+                catalog.iterator = catalog.instance._iter_native_dataset(native_filters)
 
         for master_data in self._master.iterator:
             dataset = {self._master.identifier: master_data}
