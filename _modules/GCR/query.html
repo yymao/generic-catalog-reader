@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GCR.query &#8212; Generic Catalog Reader (GCR) 0.8.8 documentation</title>
+    <title>GCR.query &#8212; Generic Catalog Reader (GCR) 0.8.9 documentation</title>
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
@@ -41,6 +41,7 @@
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;GCRQuery&#39;</span><span class="p">]</span>
 
+
 <div class="viewcode-block" id="GCRQuery"><a class="viewcode-back" href="../../index.html#GCR.GCRQuery">[docs]</a><span class="k">class</span> <span class="nc">GCRQuery</span><span class="p">(</span><span class="n">easyquery</span><span class="o">.</span><span class="n">Query</span><span class="p">):</span>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_get_table_len</span><span class="p">(</span><span class="n">table</span><span class="p">):</span>
@@ -55,9 +56,9 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_check_basic_query</span><span class="p">(</span><span class="n">basic_query</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">basic_query</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">is_string_like</span><span class="p">(</span><span class="n">basic_query</span><span class="p">)</span> <span class="ow">or</span> \
-                <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">basic_query</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">and</span> \
-                <span class="nb">len</span><span class="p">(</span><span class="n">basic_query</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">callable</span><span class="p">(</span><span class="n">basic_query</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">basic_query</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">is_string_like</span><span class="p">(</span><span class="n">basic_query</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">basic_query</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">basic_query</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">callable</span><span class="p">(</span><span class="n">basic_query</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">check_scalar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scalar_dict</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
