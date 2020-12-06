@@ -1,0 +1,574 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Generic Catalog Reader (GCR) &#8212; Generic Catalog Reader (GCR) 0.8.8 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="generic-catalog-reader-gcr">
+<h1>Generic Catalog Reader (GCR)<a class="headerlink" href="#generic-catalog-reader-gcr" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="GCR.BaseGenericCatalog">
+<em class="property">class </em><code class="sig-prename descclassname">GCR.</code><code class="sig-name descname">BaseGenericCatalog</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/GCR/base.html#BaseGenericCatalog"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#GCR.BaseGenericCatalog" title="Permalink to this definition">¶</a></dt>
+<dd><p>Abstract base class for all catalog classes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Attributes</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><a class="reference internal" href="#GCR.BaseGenericCatalog.native_filter_quantities" title="GCR.BaseGenericCatalog.native_filter_quantities"><code class="xref py py-obj docutils literal notranslate"><span class="pre">native_filter_quantities</span></code></a></dt><dd><p>quantities that can be used in native filters</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#GCR.BaseGenericCatalog.add_derived_quantity" title="GCR.BaseGenericCatalog.add_derived_quantity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_derived_quantity</span></code></a>(derived_quantity, func, …)</p></td>
+<td><p>Add a derived quantify modifier.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#GCR.BaseGenericCatalog.add_modifier_on_derived_quantities" title="GCR.BaseGenericCatalog.add_modifier_on_derived_quantities"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_modifier_on_derived_quantities</span></code></a>(…)</p></td>
+<td><p>Deprecated.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#GCR.BaseGenericCatalog.add_quantity_modifier" title="GCR.BaseGenericCatalog.add_quantity_modifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_quantity_modifier</span></code></a>(quantity, modifier[, …])</p></td>
+<td><p>Add a quantify modifier.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#GCR.BaseGenericCatalog.del_quantity_modifier" title="GCR.BaseGenericCatalog.del_quantity_modifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">del_quantity_modifier</span></code></a>(quantity)</p></td>
+<td><p>Delete a quantify modifier.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#GCR.BaseGenericCatalog.first_available" title="GCR.BaseGenericCatalog.first_available"><code class="xref py py-obj docutils literal notranslate"><span class="pre">first_available</span></code></a>(*quantities)</p></td>
+<td><p>Return the first available quantity in the input arguments.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#GCR.BaseGenericCatalog.get_catalog_info" title="GCR.BaseGenericCatalog.get_catalog_info"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_catalog_info</span></code></a>([key, default])</p></td>
+<td><p>Get information from the catalog config file.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#GCR.BaseGenericCatalog.get_input_kwargs" title="GCR.BaseGenericCatalog.get_input_kwargs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_input_kwargs</span></code></a>([key, default])</p></td>
+<td><p>Deprecated.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#GCR.BaseGenericCatalog.get_normalized_quantity_modifier" title="GCR.BaseGenericCatalog.get_normalized_quantity_modifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_normalized_quantity_modifier</span></code></a>(quantity)</p></td>
+<td><p>Retrive a quantify modifier, normalized.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#GCR.BaseGenericCatalog.get_quantities" title="GCR.BaseGenericCatalog.get_quantities"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_quantities</span></code></a>(quantities[, filters, …])</p></td>
+<td><p>Fetch quantities from this catalog.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#GCR.BaseGenericCatalog.get_quantity_info" title="GCR.BaseGenericCatalog.get_quantity_info"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_quantity_info</span></code></a>(quantity[, key, default])</p></td>
+<td><p>Get information of a certain quantity.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#GCR.BaseGenericCatalog.get_quantity_modifier" title="GCR.BaseGenericCatalog.get_quantity_modifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_quantity_modifier</span></code></a>(quantity)</p></td>
+<td><p>Retrive a quantify modifier.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#GCR.BaseGenericCatalog.has_quantities" title="GCR.BaseGenericCatalog.has_quantities"><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_quantities</span></code></a>(quantities[, include_native])</p></td>
+<td><p>Check if ALL <em>quantities</em> specified are available in this catalog</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#GCR.BaseGenericCatalog.has_quantity" title="GCR.BaseGenericCatalog.has_quantity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_quantity</span></code></a>(quantity[, include_native])</p></td>
+<td><p>Check if <em>quantity</em> is available in this catalog</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#GCR.BaseGenericCatalog.list_all_native_quantities" title="GCR.BaseGenericCatalog.list_all_native_quantities"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_all_native_quantities</span></code></a>([with_info])</p></td>
+<td><p>Return a list of all available native quantities in this catalog.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#GCR.BaseGenericCatalog.list_all_quantities" title="GCR.BaseGenericCatalog.list_all_quantities"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_all_quantities</span></code></a>([include_native, with_info])</p></td>
+<td><p>Return a list of all available quantities in this catalog.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt id="GCR.BaseGenericCatalog._generate_native_quantity_list">
+<code class="sig-name descname">_generate_native_quantity_list</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/GCR/base.html#BaseGenericCatalog._generate_native_quantity_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#GCR.BaseGenericCatalog._generate_native_quantity_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>To be implemented by subclass.
+Must return an iterable of all native quantity names.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="GCR.BaseGenericCatalog._get_quantity_info_dict">
+<code class="sig-name descname">_get_quantity_info_dict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">quantity</span></em>, <em class="sig-param"><span class="n">default</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/GCR/base.html#BaseGenericCatalog._get_quantity_info_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#GCR.BaseGenericCatalog._get_quantity_info_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>To be implemented by subclass.
+Must return a dictionary for existing quantity.
+For non-existing quantity must return default.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="GCR.BaseGenericCatalog._iter_native_dataset">
+<code class="sig-name descname">_iter_native_dataset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">native_filters</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/GCR/base.html#BaseGenericCatalog._iter_native_dataset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#GCR.BaseGenericCatalog._iter_native_dataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>To be implemented by subclass.
+Must be a generator.
+Must yield a callable, <em>native_quantity_getter</em>.
+This function must iterate over subsets of rows, not columns!</p>
+<p><em>native_filters</em> will either be <cite>None</cite> or a <cite>GCRQuery</cite> object
+(unless <cite>self.native_filter_string_only</cite> is set to True, in which
+case <em>native_filters</em> will either be <cite>None</cite> or a tuple of strings).
+If <em>native_filters</em> is a GCRQuery object, you can use
+<cite>native_filters.check_scalar(scalar_dict)</cite> to check if <cite>scalar_dict</cite>
+satisfies <cite>native_filters</cite>.</p>
+<p>Must take a single argument of a native quantity name
+(unless <cite>_obtain_native_data_dict</cite> is edited accordingly)
+Should assume the argument is valid.
+Must return a numpy 1d array.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="GCR.BaseGenericCatalog._obtain_native_data_dict">
+<em class="property">static </em><code class="sig-name descname">_obtain_native_data_dict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">native_quantities_needed</span></em>, <em class="sig-param"><span class="n">native_quantity_getter</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/GCR/base.html#BaseGenericCatalog._obtain_native_data_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#GCR.BaseGenericCatalog._obtain_native_data_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method can be overwritten if <cite>native_quantity_getter</cite> has a
+different behavior, for example, if <cite>native_quantity_getter</cite> can
+retrive multiple quantities at once, this method can return
+<code class="docutils literal notranslate"><span class="pre">`python</span>
+<span class="pre">dict(zip(native_quantities_needed,</span> <span class="pre">native_quantity_getter(native_quantities_needed)))</span>
+<span class="pre">`</span></code></p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="GCR.BaseGenericCatalog._subclass_init">
+<code class="sig-name descname">_subclass_init</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/GCR/base.html#BaseGenericCatalog._subclass_init"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#GCR.BaseGenericCatalog._subclass_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>To be implemented by subclass.
+Must return <cite>None</cite>.
+Must accept any keyword argument (i.e., must have <a href="#id1"><span class="problematic" id="id2">**</span></a>kwargs).
+This method is called during __init__().</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="GCR.BaseGenericCatalog.add_derived_quantity">
+<code class="sig-name descname">add_derived_quantity</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">derived_quantity</span></em>, <em class="sig-param"><span class="n">func</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">quantities</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/GCR/base.html#BaseGenericCatalog.add_derived_quantity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#GCR.BaseGenericCatalog.add_derived_quantity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a derived quantify modifier.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>derived_quantity</strong><span class="classifier">str</span></dt><dd><p>name of the derived quantity to be added</p>
+</dd>
+<dt><strong>func</strong><span class="classifier">callable</span></dt><dd><p>function to calculate the derived quantity
+the number of arguments should equal number of following <cite>quantities</cite></p>
+</dd>
+<dt><strong>quantities</strong><span class="classifier">list of str</span></dt><dd><p>quantities to pass to the callable</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="GCR.BaseGenericCatalog.add_modifier_on_derived_quantities">
+<code class="sig-name descname">add_modifier_on_derived_quantities</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">new_quantity</span></em>, <em class="sig-param"><span class="n">func</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">quantities</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/GCR/base.html#BaseGenericCatalog.add_modifier_on_derived_quantities"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#GCR.BaseGenericCatalog.add_modifier_on_derived_quantities" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deprecated. Use <cite>add_derived_quantity</cite> instead.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="GCR.BaseGenericCatalog.add_quantity_modifier">
+<code class="sig-name descname">add_quantity_modifier</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">quantity</span></em>, <em class="sig-param"><span class="n">modifier</span></em>, <em class="sig-param"><span class="n">overwrite</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/GCR/base.html#BaseGenericCatalog.add_quantity_modifier"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#GCR.BaseGenericCatalog.add_quantity_modifier" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a quantify modifier.
+Consider useing the high-level function <cite>add_derived_quantity</cite> instead!</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>quantity</strong><span class="classifier">str</span></dt><dd><p>name of the derived quantity to add</p>
+</dd>
+<dt><strong>modifier</strong><span class="classifier">None or str or tuple</span></dt><dd><p>If the quantity modifier is a tuple of length &gt;=2 and the first element is a callable,
+it should be in the formate of <cite>(callable, native quantity 1,  native quantity 2, …)</cite>.
+And the modifier would work as callable(native quantity 1,  native quantity 2, …)
+If the quantity modifier is None, the quantity will be used as the native quantity name
+Otherwise, the modifier would be use directly as a native quantity name</p>
+</dd>
+<dt><strong>overwrite</strong><span class="classifier">bool, optional</span></dt><dd><p>If False and quantity are already specified in _quantity_modifiers, raise an ValueError</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="GCR.BaseGenericCatalog.del_quantity_modifier">
+<code class="sig-name descname">del_quantity_modifier</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">quantity</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/GCR/base.html#BaseGenericCatalog.del_quantity_modifier"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#GCR.BaseGenericCatalog.del_quantity_modifier" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete a quantify modifier.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>quantity</strong><span class="classifier">str</span></dt><dd><p>name of the derived quantity to delete</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="GCR.BaseGenericCatalog.first_available">
+<code class="sig-name descname">first_available</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">quantities</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/GCR/base.html#BaseGenericCatalog.first_available"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#GCR.BaseGenericCatalog.first_available" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the first available quantity in the input arguments.
+Return <cite>None</cite> if none of them is available.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="GCR.BaseGenericCatalog.get_catalog_info">
+<code class="sig-name descname">get_catalog_info</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">default</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/GCR/base.html#BaseGenericCatalog.get_catalog_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#GCR.BaseGenericCatalog.get_catalog_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get information from the catalog config file.
+If <em>key</em> is <cite>None</cite>, return the full dict.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="GCR.BaseGenericCatalog.get_input_kwargs">
+<code class="sig-name descname">get_input_kwargs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">default</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/GCR/base.html#BaseGenericCatalog.get_input_kwargs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#GCR.BaseGenericCatalog.get_input_kwargs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deprecated. Use <cite>get_catalog_info</cite> instead.</p>
+<p>Get information from the catalog config file.
+If <em>key</em> is <cite>None</cite>, return the full dict.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="GCR.BaseGenericCatalog.get_normalized_quantity_modifier">
+<code class="sig-name descname">get_normalized_quantity_modifier</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">quantity</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/GCR/base.html#BaseGenericCatalog.get_normalized_quantity_modifier"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#GCR.BaseGenericCatalog.get_normalized_quantity_modifier" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrive a quantify modifier, normalized.
+This function would also return a tuple, with the first item a callable,
+and the rest native quantity names</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>quantity</strong><span class="classifier">str</span></dt><dd><p>name of the derived quantity to get</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>tuple</strong><span class="classifier">(callable, quantity1, quantity2…)</span></dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="GCR.BaseGenericCatalog.get_quantities">
+<code class="sig-name descname">get_quantities</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">quantities</span></em>, <em class="sig-param"><span class="n">filters</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">native_filters</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">return_iterator</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/GCR/base.html#BaseGenericCatalog.get_quantities"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#GCR.BaseGenericCatalog.get_quantities" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch quantities from this catalog.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>quantities</strong><span class="classifier">str or list of str or tuple of str</span></dt><dd><p>quantities to fetch</p>
+</dd>
+<dt><strong>filters</strong><span class="classifier">list of tuple, or GCRQuery instance, optional</span></dt><dd><p>filters to apply. Each filter should be in the format of (callable, str, str, …)</p>
+</dd>
+<dt><strong>native_filters</strong><span class="classifier">list of tuple, optional</span></dt><dd><p>Native filters to apply. Each filter should be in the format of (callable, str, str, …)</p>
+</dd>
+<dt><strong>return_iterator</strong><span class="classifier">bool, optional</span></dt><dd><p>if True, return an iterator that iterates over the native format, default is False</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl>
+<dt><strong>quantities</strong><span class="classifier">dict, or iterator of dict (when <cite>return_iterator</cite> is True)</span></dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="GCR.BaseGenericCatalog.get_quantity_info">
+<code class="sig-name descname">get_quantity_info</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">quantity</span></em>, <em class="sig-param"><span class="n">key</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">default</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/GCR/base.html#BaseGenericCatalog.get_quantity_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#GCR.BaseGenericCatalog.get_quantity_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get information of a certain quantity.
+If <em>key</em> is <cite>None</cite>, return the full dict for that quantity.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="GCR.BaseGenericCatalog.get_quantity_modifier">
+<code class="sig-name descname">get_quantity_modifier</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">quantity</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/GCR/base.html#BaseGenericCatalog.get_quantity_modifier"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#GCR.BaseGenericCatalog.get_quantity_modifier" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrive a quantify modifier.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>quantity</strong><span class="classifier">str</span></dt><dd><p>name of the derived quantity to get</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>quantity_modifier</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="GCR.BaseGenericCatalog.has_quantities">
+<code class="sig-name descname">has_quantities</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">quantities</span></em>, <em class="sig-param"><span class="n">include_native</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/GCR/base.html#BaseGenericCatalog.has_quantities"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#GCR.BaseGenericCatalog.has_quantities" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if ALL <em>quantities</em> specified are available in this catalog</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>quantities</strong><span class="classifier">iterable</span></dt><dd><p>a list of quantity names to check</p>
+</dd>
+<dt><strong>include_native</strong><span class="classifier">bool, optional</span></dt><dd><p>whether or not to include native quantity names when checking</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>has_quantities</strong><span class="classifier">bool</span></dt><dd><p>True if the quantities are all available; otherwise False</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="GCR.BaseGenericCatalog.has_quantity">
+<code class="sig-name descname">has_quantity</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">quantity</span></em>, <em class="sig-param"><span class="n">include_native</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/GCR/base.html#BaseGenericCatalog.has_quantity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#GCR.BaseGenericCatalog.has_quantity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if <em>quantity</em> is available in this catalog</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>quantity</strong><span class="classifier">str</span></dt><dd><p>a quantity name to check</p>
+</dd>
+<dt><strong>include_native</strong><span class="classifier">bool, optional</span></dt><dd><p>whether or not to include native quantity names when checking</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>has_quantity</strong><span class="classifier">bool</span></dt><dd><p>True if the quantities are all available; otherwise False</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="GCR.BaseGenericCatalog.list_all_native_quantities">
+<code class="sig-name descname">list_all_native_quantities</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">with_info</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/GCR/base.html#BaseGenericCatalog.list_all_native_quantities"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#GCR.BaseGenericCatalog.list_all_native_quantities" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of all available native quantities in this catalog.</p>
+<p>If <em>with_info</em> is <cite>True</cite>, return a dict with quantity info.</p>
+<p>See also: list_all_quantities</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="GCR.BaseGenericCatalog.list_all_quantities">
+<code class="sig-name descname">list_all_quantities</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">include_native</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">with_info</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/GCR/base.html#BaseGenericCatalog.list_all_quantities"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#GCR.BaseGenericCatalog.list_all_quantities" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of all available quantities in this catalog.</p>
+<p>If <em>include_native</em> is <cite>True</cite>, includes native quantities.
+If <em>with_info</em> is <cite>True</cite>, return a dict with quantity info.</p>
+<p>See also: list_all_native_quantities</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="GCR.BaseGenericCatalog.native_filter_quantities">
+<em class="property">property </em><code class="sig-name descname">native_filter_quantities</code><a class="headerlink" href="#GCR.BaseGenericCatalog.native_filter_quantities" title="Permalink to this definition">¶</a></dt>
+<dd><p>quantities that can be used in native filters</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="GCR.CompositeCatalog">
+<em class="property">class </em><code class="sig-prename descclassname">GCR.</code><code class="sig-name descname">CompositeCatalog</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">catalog_instances</span></em>, <em class="sig-param"><span class="n">catalog_identifiers</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">matching_methods</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">only_use_master_attr</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/GCR/composite.html#CompositeCatalog"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#GCR.CompositeCatalog" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">GCR.base.BaseGenericCatalog</span></code></p>
+<p>Composite Catalog</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>catalog_instances</strong><span class="classifier">list/tuple of GCR.BaseGenericCatalog instances</span></dt><dd><p>The first element of <cite>catalog_instances</cite> is the master catalog,
+with the subsequent elements the “add-on” catalogs that will overwrite
+the columns of the master catlog.</p>
+</dd>
+<dt><strong>catalog_identifiers</strong><span class="classifier">list/tuple of string, or None</span></dt><dd><p>A list/tuple of identifiers that correspond to <cite>catalog_instances</cite>.
+Each identifier is usually a string.
+Should have the same length as <cite>catalog_instances</cite>.
+If set to <cite>None</cite>, the identifiers will be ‘_0’, ‘_1’, etc.</p>
+</dd>
+<dt><strong>matching_methods</strong><span class="classifier">list or tuple, or None</span></dt><dd><p>A list/tuple of matching methods that correspond to <cite>catalog_instances</cite>.
+Each matching method can be either a column name (usually a string),
+<cite>MATCHING_FORMAT</cite>, or <cite>MATCHING_ORDER</cite>.
+If set to <cite>MATCHING_FORMAT</cite>, the reader assumes the catalog instance has
+<em>exactly</em> the same underlying data format (i.e., same row order,
+same iteration over data chucks, and same native filters).
+If set to <cite>MATCHING_ORDER</cite>, the reader assumes the catalog instance has
+the same row order but may not have the same iteration over data chunks.
+If set to a string, the reader will use that column to match to the
+master catalog and do a left join.</p>
+</dd>
+<dt><strong>only_use_master_attr</strong><span class="classifier">bool, optional (default: False)</span></dt><dd><p>If set to False, add-on catalogs will overwrite master catalog’s
+attributes just like how they overwrite quantities.
+If set to True, only the master catalog’s attributes are inherited.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Attributes</dt>
+<dd class="field-even"><dl class="simple">
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">native_filter_quantities</span></code></dt><dd><p>quantities that can be used in native filters</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_derived_quantity</span></code>(derived_quantity, func, …)</p></td>
+<td><p>Add a derived quantify modifier.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_modifier_on_derived_quantities</span></code>(…)</p></td>
+<td><p>Deprecated.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_quantity_modifier</span></code>(quantity, modifier[, …])</p></td>
+<td><p>Add a quantify modifier.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">del_quantity_modifier</span></code>(quantity)</p></td>
+<td><p>Delete a quantify modifier.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">first_available</span></code>(*quantities)</p></td>
+<td><p>Return the first available quantity in the input arguments.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_catalog_info</span></code>([key, default])</p></td>
+<td><p>Get information from the catalog config file.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_input_kwargs</span></code>([key, default])</p></td>
+<td><p>Deprecated.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_normalized_quantity_modifier</span></code>(quantity)</p></td>
+<td><p>Retrive a quantify modifier, normalized.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_quantities</span></code>(quantities[, filters, …])</p></td>
+<td><p>Fetch quantities from this catalog.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_quantity_info</span></code>(quantity[, key, default])</p></td>
+<td><p>Get information of a certain quantity.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_quantity_modifier</span></code>(quantity)</p></td>
+<td><p>Retrive a quantify modifier.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_quantities</span></code>(quantities[, include_native])</p></td>
+<td><p>Check if ALL <em>quantities</em> specified are available in this catalog</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_quantity</span></code>(quantity[, include_native])</p></td>
+<td><p>Check if <em>quantity</em> is available in this catalog</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_all_native_quantities</span></code>([with_info])</p></td>
+<td><p>Return a list of all available native quantities in this catalog.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_all_quantities</span></code>([include_native, with_info])</p></td>
+<td><p>Return a list of all available quantities in this catalog.</p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="py class">
+<dt id="GCR.GCRQuery">
+<em class="property">class </em><code class="sig-prename descclassname">GCR.</code><code class="sig-name descname">GCRQuery</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">queries</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/GCR/query.html#GCRQuery"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#GCR.GCRQuery" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">easyquery.Query</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Attributes</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">variable_names</span></code></dt><dd><p>Get all variable names required for this query</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">__call__</span></code>(table[, column_slice])</p></td>
+<td><p>Use the current Query object to create a mask (a boolean array) for <cite>table</cite>.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_scalar</span></code>(scalar_dict)</p></td>
+<td><p>check if <cite>scalar_dict</cite> satisfy query</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">copy</span></code>()</p></td>
+<td><p>Create a copy of the current Query object.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">count</span></code>(table)</p></td>
+<td><p>Use the current Query object to count the number of entries in <cite>table</cite> that satisfy <cite>queries</cite>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">filter</span></code>(table[, column_slice])</p></td>
+<td><p>Use the current Query object to create a mask (a boolean array) for <cite>table</cite>.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">mask</span></code>(table)</p></td>
+<td><p>Use the current Query object to count the number of entries in <cite>table</cite> that satisfy <cite>queries</cite>.</p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="py function">
+<dt id="GCR.dict_to_numpy_array">
+<code class="sig-prename descclassname">GCR.</code><code class="sig-name descname">dict_to_numpy_array</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">d</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/GCR/utils.html#dict_to_numpy_array"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#GCR.dict_to_numpy_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a dict of 1d array to a numpy recarray</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">Generic Catalog Reader (GCR)</a></h1>
+
+
+
+
+
+
+
+
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017-2018, Yao-Yuan Mao.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

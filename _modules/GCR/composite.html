@@ -1,0 +1,337 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GCR.composite &#8212; Generic Catalog Reader (GCR) 0.8.8 documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for GCR.composite</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Composite catalog reader</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">zip_longest</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">izip_longest</span> <span class="k">as</span> <span class="n">zip_longest</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">.base</span> <span class="kn">import</span> <span class="n">BaseGenericCatalog</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;CompositeCatalog&#39;</span><span class="p">,</span> <span class="s1">&#39;MATCHING_FORMAT&#39;</span><span class="p">,</span> <span class="s1">&#39;MATCHING_ORDER&#39;</span><span class="p">]</span>
+
+<span class="c1"># define module constants to be used in matching_columns</span>
+<span class="n">MATCHING_FORMAT</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">MATCHING_ORDER</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">()</span>
+
+
+<span class="k">class</span> <span class="nc">CatalogWrapper</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A simple wrapper to enhance code readability</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">identifier</span><span class="p">,</span> <span class="n">matching_method</span><span class="p">,</span> <span class="n">is_master</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">instance</span> <span class="o">=</span> <span class="n">instance</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">identifier</span> <span class="o">=</span> <span class="n">identifier</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_master</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">is_master</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">matching_method</span> <span class="o">=</span> <span class="n">matching_method</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">matching_column</span> <span class="o">=</span> <span class="n">matching_method</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">matching_format</span> <span class="o">=</span> <span class="p">(</span><span class="n">matching_method</span> <span class="o">==</span> <span class="n">MATCHING_FORMAT</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_master</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">matching_order</span> <span class="o">=</span> <span class="p">(</span><span class="n">matching_method</span> <span class="o">==</span> <span class="n">MATCHING_ORDER</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">matching_format</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">matching_order</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">need_index_matching</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">need_index_matching</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">iterator</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cache</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sorter</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">counter</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        clear cache</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">iterator</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cache</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">counter</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<div class="viewcode-block" id="CompositeCatalog"><a class="viewcode-back" href="../../index.html#GCR.CompositeCatalog">[docs]</a><span class="k">class</span> <span class="nc">CompositeCatalog</span><span class="p">(</span><span class="n">BaseGenericCatalog</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Composite Catalog</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    catalog_instances : list/tuple of GCR.BaseGenericCatalog instances</span>
+<span class="sd">        The first element of `catalog_instances` is the master catalog,</span>
+<span class="sd">        with the subsequent elements the &quot;add-on&quot; catalogs that will overwrite</span>
+<span class="sd">        the columns of the master catlog.</span>
+
+<span class="sd">    catalog_identifiers : list/tuple of string, or None</span>
+<span class="sd">        A list/tuple of identifiers that correspond to `catalog_instances`.</span>
+<span class="sd">        Each identifier is usually a string.</span>
+<span class="sd">        Should have the same length as `catalog_instances`.</span>
+<span class="sd">        If set to `None`, the identifiers will be &#39;_0&#39;, &#39;_1&#39;, etc.</span>
+
+<span class="sd">    matching_methods : list or tuple, or None</span>
+<span class="sd">        A list/tuple of matching methods that correspond to `catalog_instances`.</span>
+<span class="sd">        Each matching method can be either a column name (usually a string),</span>
+<span class="sd">        `MATCHING_FORMAT`, or `MATCHING_ORDER`.</span>
+<span class="sd">        If set to `MATCHING_FORMAT`, the reader assumes the catalog instance has</span>
+<span class="sd">        *exactly* the same underlying data format (i.e., same row order,</span>
+<span class="sd">        same iteration over data chucks, and same native filters).</span>
+<span class="sd">        If set to `MATCHING_ORDER`, the reader assumes the catalog instance has</span>
+<span class="sd">        the same row order but may not have the same iteration over data chunks.</span>
+<span class="sd">        If set to a string, the reader will use that column to match to the</span>
+<span class="sd">        master catalog and do a left join.</span>
+
+<span class="sd">    only_use_master_attr : bool, optional (default: False)</span>
+<span class="sd">        If set to False, add-on catalogs will overwrite master catalog&#39;s</span>
+<span class="sd">        attributes just like how they overwrite quantities.</span>
+<span class="sd">        If set to True, only the master catalog&#39;s attributes are inherited.</span>
+
+<span class="sd">    Example</span>
+<span class="sd">    -------</span>
+<span class="sd">    &gt;&gt;&gt; cat0.list_all_quantities()</span>
+<span class="sd">    [&#39;a&#39;, &#39;b&#39;, &#39;c&#39;, &#39;d&#39;]</span>
+<span class="sd">    &gt;&gt;&gt; cat1.list_all_quantities()</span>
+<span class="sd">    [&#39;a&#39;, &#39;b&#39;, &#39;e&#39;]</span>
+<span class="sd">    &gt;&gt;&gt; cat2.list_all_quantities()</span>
+<span class="sd">    [&#39;a&#39;, &#39;c&#39;, &#39;f&#39;]</span>
+
+<span class="sd">    &gt;&gt;&gt; cc = CompositeCatalog([cat0, cat1, cat2])</span>
+
+<span class="sd">    &gt;&gt;&gt; cc.get_quantity_modifier(&#39;a&#39;)</span>
+<span class="sd">    (&#39;_2&#39;, &#39;a&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; cc.get_quantity_modifier(&#39;b&#39;)</span>
+<span class="sd">    (&#39;_1&#39;, &#39;b&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; cc.get_quantity_modifier(&#39;c&#39;)</span>
+<span class="sd">    (&#39;_2&#39;, &#39;c&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; cc.get_quantity_modifier(&#39;d&#39;)</span>
+<span class="sd">    (&#39;_0&#39;, &#39;d&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; cc.get_quantity_modifier(&#39;e&#39;)</span>
+<span class="sd">    (&#39;_1&#39;, &#39;e&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; cc.get_quantity_modifier(&#39;f&#39;)</span>
+<span class="sd">    (&#39;_2&#39;, &#39;f&#39;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">catalog_instances</span><span class="p">,</span> <span class="n">catalog_identifiers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">matching_methods</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">only_use_master_attr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;CompositeCatalog is still an experimental feature. Use with care!&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_catalogs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">identifier</span><span class="p">,</span> <span class="n">matching_method</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+                <span class="n">zip_longest</span><span class="p">(</span>
+                    <span class="n">catalog_instances</span><span class="p">,</span>
+                    <span class="n">catalog_identifiers</span> <span class="ow">or</span> <span class="p">[],</span>
+                    <span class="n">matching_methods</span> <span class="ow">or</span> <span class="p">[],</span>
+                <span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_catalogs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">CatalogWrapper</span><span class="p">(</span>
+                    <span class="n">instance</span><span class="p">,</span>
+                    <span class="n">identifier</span> <span class="ow">or</span> <span class="s1">&#39;_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">),</span>
+                    <span class="n">matching_method</span><span class="p">,</span>
+                    <span class="n">is_master</span><span class="o">=</span><span class="p">(</span><span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">),</span>
+                <span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_catalogs</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_catalogs</span><span class="p">)</span>
+
+        <span class="c1"># check number of catalogs</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_catalogs</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Must have more than one catalogs to make a composite catalog!&#39;</span><span class="p">)</span>
+
+        <span class="c1"># check uniqueness of identifiers</span>
+        <span class="n">identifiers</span> <span class="o">=</span> <span class="p">[</span><span class="n">cat</span><span class="o">.</span><span class="n">identifier</span> <span class="k">for</span> <span class="n">cat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_catalogs</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">identifiers</span><span class="p">))</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">identifiers</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Catalog identifiers need to be all distinct!&#39;</span><span class="p">)</span>
+
+        <span class="c1"># create handy attributes for the master catalog</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_master</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_catalogs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">master</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_master</span><span class="o">.</span><span class="n">instance</span>  <span class="c1"># for users&#39; convenience</span>
+
+        <span class="c1"># check if it&#39;s possbile to do index matching</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">cat</span><span class="o">.</span><span class="n">need_index_matching</span> <span class="k">for</span> <span class="n">cat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_catalogs</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_need_index_matching</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_master</span><span class="o">.</span><span class="n">matching_column</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Must specify the column for the master catalog to do catalog matching!&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_need_index_matching</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_need_order_matching</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">cat</span><span class="o">.</span><span class="n">matching_order</span> <span class="k">for</span> <span class="n">cat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_catalogs</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_native_filter_quantities</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">master</span><span class="o">.</span><span class="n">native_filter_quantities</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">native_filter_string_only</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">master</span><span class="o">.</span><span class="n">native_filter_string_only</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_native_quantities</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_quantity_modifiers</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">catalog</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_catalogs</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">catalog</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">list_all_quantities</span><span class="p">(</span><span class="kc">True</span><span class="p">):</span>
+                <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">catalog</span><span class="o">.</span><span class="n">identifier</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_native_quantities</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_quantity_modifiers</span><span class="p">[</span><span class="n">q</span><span class="p">]</span> <span class="o">=</span> <span class="n">key</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">only_use_master_attr</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">only_use_master_attr</span><span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">(</span><span class="n">CompositeCatalog</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_subclass_init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">_generate_native_quantity_list</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_native_quantities</span>
+
+    <span class="k">def</span> <span class="nf">_obtain_native_data_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">native_quantities_needed</span><span class="p">,</span> <span class="n">native_quantity_getter</span><span class="p">):</span>
+        <span class="n">native_quantities_needed_dict</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">identifier</span><span class="p">,</span> <span class="n">quantity</span> <span class="ow">in</span> <span class="n">native_quantities_needed</span><span class="p">:</span>
+            <span class="n">native_quantities_needed_dict</span><span class="p">[</span><span class="n">identifier</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">quantity</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_need_index_matching</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">catalog</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_catalogs</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">catalog</span><span class="o">.</span><span class="n">is_master</span> <span class="ow">or</span> <span class="n">catalog</span><span class="o">.</span><span class="n">need_index_matching</span><span class="p">:</span>
+                    <span class="n">native_quantities_needed_dict</span><span class="p">[</span><span class="n">catalog</span><span class="o">.</span><span class="n">identifier</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">catalog</span><span class="o">.</span><span class="n">matching_column</span><span class="p">)</span>
+
+        <span class="n">master_dummy_column</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_need_order_matching</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">native_quantities_needed_dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_master</span><span class="o">.</span><span class="n">identifier</span><span class="p">]:</span>
+                <span class="n">master_dummy_column</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">native_quantities_needed_dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_master</span><span class="o">.</span><span class="n">identifier</span><span class="p">])</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">master_dummy_column</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">master</span><span class="o">.</span><span class="n">list_all_quantities</span><span class="p">(</span><span class="kc">True</span><span class="p">))</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+                <span class="n">native_quantities_needed_dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_master</span><span class="o">.</span><span class="n">identifier</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">master_dummy_column</span><span class="p">)</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">catalog</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_catalogs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">catalog</span><span class="o">.</span><span class="n">identifier</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">native_quantities_needed_dict</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">catalog</span><span class="o">.</span><span class="n">matching_format</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">native_quantity_getter</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">catalog</span><span class="o">.</span><span class="n">identifier</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Catalog </span><span class="si">{}</span><span class="s1"> does not have matching format!&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">catalog</span><span class="o">.</span><span class="n">identifier</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">q</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">catalog</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">_load_quantities</span><span class="p">(</span> <span class="c1"># pylint: disable=W0212</span>
+                        <span class="n">native_quantities_needed_dict</span><span class="p">[</span><span class="n">catalog</span><span class="o">.</span><span class="n">identifier</span><span class="p">],</span>
+                        <span class="n">native_quantity_getter</span><span class="p">[</span><span class="n">catalog</span><span class="o">.</span><span class="n">identifier</span><span class="p">],</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">data</span><span class="p">[(</span><span class="n">catalog</span><span class="o">.</span><span class="n">identifier</span><span class="p">,</span> <span class="n">q</span><span class="p">)]</span> <span class="o">=</span> <span class="n">v</span>
+            <span class="k">elif</span> <span class="n">catalog</span><span class="o">.</span><span class="n">cache</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">catalog</span><span class="o">.</span><span class="n">cache</span> <span class="o">=</span> <span class="n">catalog</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">get_quantities</span><span class="p">(</span><span class="n">native_quantities_needed_dict</span><span class="p">[</span><span class="n">catalog</span><span class="o">.</span><span class="n">identifier</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">catalog</span><span class="o">.</span><span class="n">matching_order</span><span class="p">:</span>
+                    <span class="n">catalog</span><span class="o">.</span><span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">elif</span> <span class="n">catalog</span><span class="o">.</span><span class="n">sorter</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">catalog</span><span class="o">.</span><span class="n">sorter</span> <span class="o">=</span> <span class="n">catalog</span><span class="o">.</span><span class="n">cache</span><span class="p">[</span><span class="n">catalog</span><span class="o">.</span><span class="n">matching_column</span><span class="p">]</span><span class="o">.</span><span class="n">argsort</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">catalog</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_catalogs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">catalog</span><span class="o">.</span><span class="n">identifier</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">native_quantities_needed_dict</span> <span class="ow">or</span> <span class="n">catalog</span><span class="o">.</span><span class="n">matching_format</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="n">catalog</span><span class="o">.</span><span class="n">matching_order</span><span class="p">:</span>
+                <span class="n">count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">[(</span><span class="bp">self</span><span class="o">.</span><span class="n">_master</span><span class="o">.</span><span class="n">identifier</span><span class="p">,</span> <span class="n">master_dummy_column</span><span class="p">)])</span>
+                <span class="n">slice_this</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">catalog</span><span class="o">.</span><span class="n">counter</span><span class="p">,</span> <span class="n">catalog</span><span class="o">.</span><span class="n">counter</span> <span class="o">+</span> <span class="n">count</span><span class="p">)</span>
+                <span class="n">catalog</span><span class="o">.</span><span class="n">counter</span> <span class="o">+=</span> <span class="n">count</span>
+                <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">native_quantities_needed_dict</span><span class="p">[</span><span class="n">catalog</span><span class="o">.</span><span class="n">identifier</span><span class="p">]:</span>
+                    <span class="n">data_this</span> <span class="o">=</span> <span class="n">catalog</span><span class="o">.</span><span class="n">cache</span><span class="p">[</span><span class="n">q</span><span class="p">][</span><span class="n">slice_this</span><span class="p">]</span>
+                    <span class="n">data</span><span class="p">[(</span><span class="n">catalog</span><span class="o">.</span><span class="n">identifier</span><span class="p">,</span> <span class="n">q</span><span class="p">)]</span> <span class="o">=</span> <span class="n">data_this</span>
+                <span class="k">continue</span>
+
+            <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span>
+                <span class="n">a</span><span class="o">=</span><span class="n">catalog</span><span class="o">.</span><span class="n">cache</span><span class="p">[</span><span class="n">catalog</span><span class="o">.</span><span class="n">matching_column</span><span class="p">],</span>
+                <span class="n">v</span><span class="o">=</span><span class="n">data</span><span class="p">[(</span><span class="bp">self</span><span class="o">.</span><span class="n">_master</span><span class="o">.</span><span class="n">identifier</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_master</span><span class="o">.</span><span class="n">matching_column</span><span class="p">)],</span>
+                <span class="n">sorter</span><span class="o">=</span><span class="n">catalog</span><span class="o">.</span><span class="n">sorter</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">s</span><span class="p">[</span><span class="n">s</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">catalog</span><span class="o">.</span><span class="n">sorter</span><span class="p">)]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+            <span class="n">matching_idx</span> <span class="o">=</span> <span class="n">catalog</span><span class="o">.</span><span class="n">sorter</span><span class="p">[</span><span class="n">s</span><span class="p">]</span>
+            <span class="n">not_matched_mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">catalog</span><span class="o">.</span><span class="n">cache</span><span class="p">[</span><span class="n">catalog</span><span class="o">.</span><span class="n">matching_column</span><span class="p">][</span><span class="n">matching_idx</span><span class="p">]</span> <span class="o">!=</span>
+                                <span class="n">data</span><span class="p">[(</span><span class="bp">self</span><span class="o">.</span><span class="n">_master</span><span class="o">.</span><span class="n">identifier</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_master</span><span class="o">.</span><span class="n">matching_column</span><span class="p">)])</span>
+
+            <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">native_quantities_needed_dict</span><span class="p">[</span><span class="n">catalog</span><span class="o">.</span><span class="n">identifier</span><span class="p">]:</span>
+                <span class="n">data_this</span> <span class="o">=</span> <span class="n">catalog</span><span class="o">.</span><span class="n">cache</span><span class="p">[</span><span class="n">q</span><span class="p">][</span><span class="n">matching_idx</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">not_matched_mask</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                    <span class="n">data_this</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data_this</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">not_matched_mask</span><span class="p">)</span>
+                <span class="n">data</span><span class="p">[(</span><span class="n">catalog</span><span class="o">.</span><span class="n">identifier</span><span class="p">,</span> <span class="n">q</span><span class="p">)]</span> <span class="o">=</span> <span class="n">data_this</span>
+
+        <span class="k">return</span> <span class="n">data</span>
+
+    <span class="k">def</span> <span class="nf">_iter_native_dataset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">native_filters</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">catalog</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_catalogs</span><span class="p">:</span>
+            <span class="n">catalog</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">catalog</span><span class="o">.</span><span class="n">matching_format</span><span class="p">:</span>
+                <span class="n">catalog</span><span class="o">.</span><span class="n">iterator</span> <span class="o">=</span> <span class="n">catalog</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">_iter_native_dataset</span><span class="p">(</span><span class="n">native_filters</span><span class="p">)</span> <span class="c1"># pylint: disable=W0212</span>
+
+        <span class="k">for</span> <span class="n">master_data</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_master</span><span class="o">.</span><span class="n">iterator</span><span class="p">:</span>
+            <span class="n">dataset</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_master</span><span class="o">.</span><span class="n">identifier</span><span class="p">:</span> <span class="n">master_data</span><span class="p">}</span>
+            <span class="k">for</span> <span class="n">catalog</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_catalogs</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+                <span class="k">if</span> <span class="n">catalog</span><span class="o">.</span><span class="n">matching_format</span><span class="p">:</span>
+                    <span class="n">dataset</span><span class="p">[</span><span class="n">catalog</span><span class="o">.</span><span class="n">identifier</span><span class="p">]</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">catalog</span><span class="o">.</span><span class="n">iterator</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="n">dataset</span>
+
+    <span class="k">def</span> <span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">only_use_master_attr</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">catalog</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_catalogs</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">catalog</span><span class="o">.</span><span class="n">instance</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">catalog</span><span class="o">.</span><span class="n">instance</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">master</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">Generic Catalog Reader (GCR)</a></h1>
+
+
+
+
+
+
+
+
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017-2018, Yao-Yuan Mao.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
