@@ -3,6 +3,10 @@ name: CI Test
 on:
   push:
     branches: [ master ]
+    paths-ignore:
+    - '.github/workflows/create-release.yml'
+    - 'docs-src/**'
+    - 'README.md'
   pull_request:
     branches: [ master ]
 
