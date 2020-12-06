@@ -11,15 +11,18 @@ http://opensource.org/licenses/MIT
 import os
 from setuptools import setup
 
+# pylint: disable=E0602,W0122
+
+
 with open(os.path.join(os.path.dirname(__file__), 'GCR', 'version.py')) as f:
-    exec(f.read()) #pylint: disable=W0122
+    exec(f.read())
 
 setup(
     name='GCR',
-    version=__version__, #pylint: disable=E0602
+    version=__version__,  # noqa: F821
     description='Generic Catalog Reader: A common reader interface for accessing generic catalogs',
     url='https://github.com/yymao/generic-catalog-reader',
-    download_url='https://github.com/yymao/generic-catalog-reader/archive/v{}.zip'.format(__version__), #pylint: disable=E0602
+    download_url='https://github.com/yymao/generic-catalog-reader/archive/v{}.zip'.format(__version__),  # noqa: F821
     author='Yao-Yuan Mao',
     author_email='yymao.astro@gmail.com',
     maintainer='Yao-Yuan Mao',
