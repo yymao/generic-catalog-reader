@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GCR.utils &#8212; Generic Catalog Reader (GCR) 0.8.8 documentation</title>
+    <title>GCR.utils &#8212; Generic Catalog Reader (GCR) 0.8.9 documentation</title>
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
@@ -40,6 +40,7 @@
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;is_string_like&#39;</span><span class="p">,</span> <span class="s1">&#39;trivial_callable&#39;</span><span class="p">,</span> <span class="s1">&#39;dict_to_numpy_array&#39;</span><span class="p">,</span> <span class="s1">&#39;concatenate_1d&#39;</span><span class="p">]</span>
 
+
 <span class="k">def</span> <span class="nf">is_string_like</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Check whether obj behaves like a string.</span>
@@ -50,15 +51,18 @@
         <span class="k">return</span> <span class="kc">False</span>
     <span class="k">return</span> <span class="kc">True</span>
 
+
 <span class="k">def</span> <span class="nf">trivial_callable</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;return itself&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">x</span>
+
 
 <div class="viewcode-block" id="dict_to_numpy_array"><a class="viewcode-back" href="../../index.html#GCR.dict_to_numpy_array">[docs]</a><span class="k">def</span> <span class="nf">dict_to_numpy_array</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Convert a dict of 1d array to a numpy recarray</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">fromarrays</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">([(</span><span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="n">v</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">()]))</span></div>
+
 
 <span class="k">def</span> <span class="nf">concatenate_1d</span><span class="p">(</span><span class="n">arrays</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
