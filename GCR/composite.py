@@ -13,7 +13,7 @@ from .base import BaseGenericCatalog
 __all__ = ['CompositeSpecs', 'CompositeCatalog']
 
 
-# For backward compatibitly: define module constants to be used in matching_columns
+# For backward compatibility: define module constants to be used in matching_columns
 MATCHING_FORMAT = None
 MATCHING_ORDER = tuple()
 
@@ -78,12 +78,22 @@ class CompositeSpecs(object):
         **kwargs
     ):
         self.instance = instance
-        self.identifier = str(identifier or repr(instance))
+        self.identifier = str(identifier or "")
 
         self.matching_partition = bool(matching_partition)
         self.matching_row_order = bool(matching_row_order)
         if matching_by_column:
             self.set_matching_column(matching_by_column, matching_column_in_main, matching_partition)
+
+        # For backward compatibility
+        if "matching_method" in kwargs:
+            matching_method = kwargs["matching_method"]
+            if matching_method == MATCHING_FORMAT or matching_method == "MATCHING_FORMAT":
+                self.set_matching_format()
+            elif matching_method == MATCHING_ORDER or matching_method == "MATCHING_ORDER":
+                self.set_matching_order()
+            else:
+                self.set_matching_column(matching_method)
 
         self.overwrite_quantities = bool(overwrite_quantities)
         self.overwrite_attributes = bool(overwrite_attributes)
@@ -210,28 +220,14 @@ class CompositeCatalog(BaseGenericCatalog):
                 try:
                     identifier = catalog_identifiers[i]
                 except (TypeError, KeyError, IndexError):
-                    identifier = '_{}'.format(i)
-
-                cat = CompositeSpecs(instance, identifier)
-
+                    identifier = None
                 try:
                     matching_method = matching_methods[i]
                 except (TypeError, KeyError, IndexError):
                     matching_method = MATCHING_FORMAT
-
-                if matching_method == MATCHING_FORMAT:
-                    cat.set_matching_format()
-                elif matching_method == MATCHING_ORDER:
-                    cat.set_matching_order()
-                else:
-                    cat.set_matching_column(matching_method)
+                cat = CompositeSpecs(instance, identifier, matching_method=matching_method)
 
             self._catalogs.append(cat)
-
-        # check uniqueness of identifiers
-        identifiers = [cat.identifier for cat in self._catalogs]
-        if len(set(identifiers)) != len(identifiers) or not all(isinstance(i, str) for i in identifiers):
-            raise ValueError('Catalog identifiers need to be all distinct strings!')
 
         # check uniqueness of main catalogs
         main_flags = [cat.is_main for cat in self._catalogs]
@@ -244,6 +240,12 @@ class CompositeCatalog(BaseGenericCatalog):
         self._main = self._catalogs.pop(main_flags.index(True))
         self._catalogs.insert(0, self._main)
         self._catalogs = tuple(self._catalogs)
+
+        # check uniqueness of identifiers
+        identifiers = [cat.identifier for cat in self._catalogs]
+        for i, cat in enumerate(self._catalogs):
+            if identifiers.index(cat.identifier) != i or not cat.identifier:
+                cat.identifier = cat.identifier + "_{}".format(i)
 
         # check all catalogs have valid matching method
         if not all(cat.is_valid_matching for cat in self._catalogs):
@@ -399,3 +401,6 @@ class CompositeCatalog(BaseGenericCatalog):
     def master(self):
         # backward compatibility
         return self.main
+
+    def __len__(self):
+        return len(self.main)
