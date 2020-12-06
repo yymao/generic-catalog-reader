@@ -10,7 +10,7 @@ import numpy as np
 
 from .base import BaseGenericCatalog
 
-__all__ = ['CompositeSpecs', 'CompositeCatalog']
+__all__ = ['CompositeSpecs', 'CompositeCatalog', 'MATCHING_FORMAT', 'MATCHING_ORDER']
 
 
 # For backward compatibility: define module constants to be used in matching_columns
