@@ -299,11 +299,11 @@ class CompositeCatalog(BaseGenericCatalog):
 
             # set order_matching_dummy_col if needed
             elif order_matching_dummy_col is None and cat.matching_row_order and not cat.matching_partition:
-                if native_quantities_needed_dict[self._master.identifier]:
-                    order_matching_dummy_col = list(native_quantities_needed_dict[self._master.identifier]).pop()
+                if native_quantities_needed_dict[self._main.identifier]:
+                    order_matching_dummy_col = list(native_quantities_needed_dict[self._main.identifier]).pop()
                 else:
                     order_matching_dummy_col = list(self.master.list_all_quantities(True)).pop()
-                    native_quantities_needed_dict[self._master.identifier].add(order_matching_dummy_col)
+                    native_quantities_needed_dict[self._main.identifier].add(order_matching_dummy_col)
 
         data = dict()
         for cat in self._catalogs:
@@ -347,7 +347,7 @@ class CompositeCatalog(BaseGenericCatalog):
             if order_matching_dummy_col is not None:
                 if not cat.counter:
                     cat.counter = 0
-                count = len(data[(self._master.identifier, order_matching_dummy_col)])
+                count = len(data[(self._main.identifier, order_matching_dummy_col)])
                 slice_this = slice(cat.counter, cat.counter + count)
                 cat.counter += count
                 for q in quantities_needed:
