@@ -6,7 +6,7 @@ SPHINXOPTS    =
 SPHINXBUILD   = python -msphinx
 SPHINXPROJ    = GCR
 SOURCEDIR     = .
-BUILDDIR      = build
+BUILDDIR      = ../docs_build
 
 all:
 	@$(SPHINXBUILD) "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
