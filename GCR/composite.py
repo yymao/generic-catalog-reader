@@ -387,7 +387,7 @@ class CompositeCatalog(BaseGenericCatalog):
 
     def _get_catalog_by_id(self, identifier):
         for cat in self._catalogs:
-            if cat == identifier:
+            if cat.identifier == identifier:
                 return cat
         raise KeyError(identifier, "not exist!")
 
