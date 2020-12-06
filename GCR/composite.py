@@ -234,11 +234,13 @@ class CompositeCatalog(BaseGenericCatalog):
         if sum(main_flags) > 1:
             raise ValueError('There can be only one main catalog!')
         elif not any(main_flags):
-            self._catalogs[0].is_main = True
+            self._main = self._catalogs[0]
+            self._main.is_main = True
+        else:
+            # make sure main catalog is the first catalog
+            self._main = self._catalogs.pop(main_flags.index(True))
+            self._catalogs.insert(0, self._main)
 
-        # make sure main catalog is the first catalog
-        self._main = self._catalogs.pop(main_flags.index(True))
-        self._catalogs.insert(0, self._main)
         self._catalogs = tuple(self._catalogs)
 
         # check uniqueness of identifiers
