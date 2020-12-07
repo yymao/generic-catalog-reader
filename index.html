@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Generic Catalog Reader (GCR) &#8212; Generic Catalog Reader (GCR) 0.8.9 documentation</title>
+    <title>Generic Catalog Reader (GCR) &#8212; Generic Catalog Reader (GCR) 0.9.0 documentation</title>
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -380,35 +380,14 @@ If <em>with_info</em> is <cite>True</cite>, return a dict with quantity info.</p
 
 <dl class="py class">
 <dt id="GCR.CompositeCatalog">
-<em class="property">class </em><code class="sig-prename descclassname">GCR.</code><code class="sig-name descname">CompositeCatalog</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">catalog_instances</span></em>, <em class="sig-param"><span class="n">catalog_identifiers</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">matching_methods</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">only_use_master_attr</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">always_return_masked_array</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/GCR/composite.html#CompositeCatalog"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#GCR.CompositeCatalog" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">GCR.</code><code class="sig-name descname">CompositeCatalog</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">catalog_instances</span></em>, <em class="sig-param"><span class="n">catalog_identifiers</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">matching_methods</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">only_use_master_attr</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">always_return_masked_array</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/GCR/composite.html#CompositeCatalog"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#GCR.CompositeCatalog" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">GCR.base.BaseGenericCatalog</span></code></p>
-<p>Composite Catalog</p>
+<p>Composite Catalog class</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>catalog_instances</strong><span class="classifier">list/tuple of GCR.BaseGenericCatalog instances</span></dt><dd><p>The first element of <cite>catalog_instances</cite> is the master catalog,
-with the subsequent elements the “add-on” catalogs that will overwrite
-the columns of the master catlog.</p>
-</dd>
-<dt><strong>catalog_identifiers</strong><span class="classifier">list/tuple of string, or None</span></dt><dd><p>A list/tuple of identifiers that correspond to <cite>catalog_instances</cite>.
-Each identifier is usually a string.
-Should have the same length as <cite>catalog_instances</cite>.
-If set to <cite>None</cite>, the identifiers will be ‘_0’, ‘_1’, etc.</p>
-</dd>
-<dt><strong>matching_methods</strong><span class="classifier">list or tuple, or None</span></dt><dd><p>A list/tuple of matching methods that correspond to <cite>catalog_instances</cite>.
-Each matching method can be either a column name (usually a string),
-<cite>MATCHING_FORMAT</cite>, or <cite>MATCHING_ORDER</cite>.
-If set to <cite>MATCHING_FORMAT</cite>, the reader assumes the catalog instance has
-<em>exactly</em> the same underlying data format (i.e., same row order,
-same iteration over data chucks, and same native filters).
-If set to <cite>MATCHING_ORDER</cite>, the reader assumes the catalog instance has
-the same row order but may not have the same iteration over data chunks.
-If set to a string, the reader will use that column to match to the
-master catalog and do a left join.</p>
-</dd>
-<dt><strong>only_use_master_attr</strong><span class="classifier">bool, optional (default: False)</span></dt><dd><p>If set to False, add-on catalogs will overwrite master catalog’s
-attributes just like how they overwrite quantities.
-If set to True, only the master catalog’s attributes are inherited.</p>
+<dt><strong>catalog_instances</strong><span class="classifier">A list of CompositeSpecs instance.</span></dt><dd><p>Alternatively, a list of dictionaries that can be used to init CompositeSpecs.
+See CompositeSpecs docstring for details.</p>
 </dd>
 <dt><strong>always_return_masked_array</strong><span class="classifier">bool, optional (default: False)</span></dt><dd><p>If set to True, always return masked array unless the catalogs have matching formats.</p>
 </dd>
@@ -416,6 +395,9 @@ If set to True, only the master catalog’s attributes are inherited.</p>
 </dd>
 <dt class="field-even">Attributes</dt>
 <dd class="field-even"><dl class="simple">
+<dt><strong>catalogs</strong></dt><dd></dd>
+<dt><strong>main</strong></dt><dd></dd>
+<dt><strong>master</strong></dt><dd></dd>
 <dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">native_filter_quantities</span></code></dt><dd><p>quantities that can be used in native filters</p>
 </dd>
 </dl>
