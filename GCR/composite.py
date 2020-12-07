@@ -389,11 +389,8 @@ class CompositeCatalog(BaseGenericCatalog):
         return getattr(self.main, name)
 
     def _get_quantity_info_dict(self, quantity, default=None):
-        quantity = self._quantity_modifiers.get(quantity)
-        identifiers = [cat.identifier for cat in self._catalogs]
-        if isinstance(quantity, tuple) and len(quantity) == 2 and quantity[0] in identifiers:
-            self.catalogs[identifiers.index(quantity[0])]._get_quantity_info_dict(quantity[1], default=default)
-        return default
+        cat_id, q = self._quantity_modifiers.get(quantity)
+        return self._get_catalog_by_id(cat_id).instance._get_quantity_info_dict(q, default=default)
 
     def _get_catalog_by_id(self, identifier):
         for cat in self._catalogs:
