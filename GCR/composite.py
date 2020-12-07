@@ -18,9 +18,9 @@ MATCHING_FORMAT = None
 MATCHING_ORDER = tuple()
 
 
-def _match(self, index_this, index_main, sorter=None):
+def _match(index_this, index_main, sorter=None):
     if sorter is None:
-        sorter = index_this.argsort()
+        sorter = np.argsort(index_this)
     s = np.searchsorted(index_this, index_main, sorter=sorter)
     s[s >= len(sorter)] = -1
     matching_idx = sorter[s]
