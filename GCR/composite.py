@@ -390,7 +390,7 @@ class CompositeCatalog(BaseGenericCatalog):
 
     def _get_quantity_info_dict(self, quantity, default=None):
         quantity = self._quantity_modifiers.get(quantity)
-        identifiers = self.catalog_identifiers
+        identifiers = [cat.identifier for cat in self._catalogs]
         if isinstance(quantity, tuple) and len(quantity) == 2 and quantity[0] in identifiers:
             self.catalogs[identifiers.index(quantity[0])]._get_quantity_info_dict(quantity[1], default=default)
         return default
@@ -400,10 +400,6 @@ class CompositeCatalog(BaseGenericCatalog):
             if cat.identifier == identifier:
                 return cat
         raise KeyError(identifier, "not exist!")
-
-    @property
-    def catalog_identifiers(self):
-        return tuple((cat.identifiers for cat in self._catalogs))
 
     @property
     def catalogs(self):
