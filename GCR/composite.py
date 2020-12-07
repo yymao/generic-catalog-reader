@@ -319,8 +319,8 @@ class CompositeCatalog(BaseGenericCatalog):
             elif cat.cache is None:
                 cat.cache = cat.instance.get_quantities(quantities_needed)
 
-            # for main catalogs, import data and do nothing else:
-            if cat.is_main:
+            # for main catalog or catalog has exact matching format, import data and do nothing else:
+            if cat.is_main or (cat.matching_partition and cat.matching_row_order):
                 for q, v in cat.cache.items():
                     data[(cat.identifier, q)] = v
                 cat.cache = None
