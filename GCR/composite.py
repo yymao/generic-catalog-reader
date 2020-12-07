@@ -253,6 +253,16 @@ class CompositeCatalog(BaseGenericCatalog):
         if not all(cat.is_valid_matching for cat in self._catalogs):
             raise ValueError("Not all catalogs have valid matching method!")
 
+        # backward compatibility: matching_column_in_main was used to set in main catalog's matching_method
+        main_matching_col = self._main.other_kwargs.get("matching_method")
+        if main_matching_col and self._main.instance.has_quantity(main_matching_col):
+            for cat in self._catalogs:
+                if (
+                    cat.matching_column_in_main and
+                    cat.matching_column_in_main == cat.other_kwargs.get("matching_method")
+                ):
+                    cat.matching_column_in_main = main_matching_col
+
         self._native_filter_quantities = set(self.main.native_filter_quantities)
         self.native_filter_string_only = self.main.native_filter_string_only
 
