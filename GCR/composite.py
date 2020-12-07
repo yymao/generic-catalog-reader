@@ -364,7 +364,7 @@ class CompositeCatalog(BaseGenericCatalog):
                     data[(cat.identifier, q)] = cat.cache[q][slice_this]
 
             if cat.matching_partition:
-                cat.cache = None
+                cat.cache = cat.sorter = cat.counter = None
 
         return data
 
