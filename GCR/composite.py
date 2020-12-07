@@ -296,7 +296,7 @@ class CompositeCatalog(BaseGenericCatalog):
 
         order_matching_dummy_col = None
 
-        for cat_id in native_quantities_needed_dict:
+        for cat_id in list(native_quantities_needed_dict):
             cat = self._get_catalog_by_id(cat_id)
 
             if cat.is_main:
