@@ -402,6 +402,10 @@ class CompositeCatalog(BaseGenericCatalog):
         raise KeyError(identifier, "not exist!")
 
     @property
+    def catalog_identifiers(self):
+        return tuple((cat.identifiers for cat in self._catalogs))
+
+    @property
     def catalogs(self):
         return tuple((cat.instance for cat in self._catalogs))
 
