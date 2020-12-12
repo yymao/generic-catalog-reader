@@ -82,6 +82,7 @@ class CompositeSpecs(object):
 
         self.matching_partition = bool(matching_partition)
         self.matching_row_order = bool(matching_row_order)
+        self.matching_by_column = self.matching_column_in_main = None
         if matching_by_column:
             self.set_matching_column(matching_by_column, matching_column_in_main, matching_partition)
 
