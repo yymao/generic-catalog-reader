@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GCR.composite &#8212; Generic Catalog Reader (GCR) 0.9.0 documentation</title>
+    <title>GCR.composite &#8212; Generic Catalog Reader (GCR) 0.9.1 documentation</title>
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
@@ -116,6 +116,7 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">matching_partition</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">matching_partition</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">matching_row_order</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">matching_row_order</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">matching_by_column</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matching_column_in_main</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">matching_by_column</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_matching_column</span><span class="p">(</span><span class="n">matching_by_column</span><span class="p">,</span> <span class="n">matching_column_in_main</span><span class="p">,</span> <span class="n">matching_partition</span><span class="p">)</span>
 
