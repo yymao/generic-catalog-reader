@@ -1,5 +1,6 @@
 # Generic Catalog Reader (GCR)
-[![PyPI version](https://img.shields.io/pypi/v/GCR.svg)](https://pypi.python.org/pypi/GCR)
+[![Conda Version](https://img.shields.io/conda/vn/conda-forge/gcr.svg)](https://anaconda.org/conda-forge/gcr)
+[![PyPIVversion](https://img.shields.io/pypi/v/GCR.svg)](https://pypi.python.org/pypi/GCR)
 
 A ready-to-use, abstract base class for creating a common reader interface that accesses generic table-like catalogs. 
 
@@ -7,7 +8,17 @@ This project was started in response to the need of the [DESCQA](https://github.
 
 ## Installation
 
-    pip install GCR
+You can install `GCR` from conda-forge:
+
+```bash
+conda install gcr --channel conda-forge
+```
+
+Or from PyPI:
+
+```bash
+pip install GCR
+```
 
 ## Concept
 
