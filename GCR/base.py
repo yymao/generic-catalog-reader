@@ -185,7 +185,14 @@ class BaseGenericCatalog(object):
         Get information of a certain quantity.
         If *key* is `None`, return the full dict for that quantity.
         """
-        d = self._get_quantity_info_dict(quantity, default if key is None else dict())
+        d = self._get_quantity_info_dict(quantity, default=None)
+        if d is None and quantity in self._quantity_modifiers:
+            native = self._quantity_modifiers[quantity]
+            if native:
+                d = self._get_quantity_info_dict(native, default=None)
+
+        if d is None:
+            return default
 
         if key is None:
             return d
