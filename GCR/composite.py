@@ -398,7 +398,7 @@ class CompositeCatalog(BaseGenericCatalog):
             except KeyError:
                 pass
             else:
-                return cat.instance._get_quantity_info_dict(q, default=default)
+                return cat.instance.get_quantity_info(q, default=default)
         return default
 
     def _get_catalog_by_id(self, identifier):
