@@ -39,7 +39,7 @@ class BaseGenericCatalog(object):
         # to check if all native quantities in the modifiers are present
         self._check_quantities_exist(self.list_all_quantities(True), raise_exception=False)
 
-    def get_quantities(self, quantities, filters=None, native_filters=None, return_iterator=False):
+    def get_quantities(self, quantities, filters=None, native_filters=None, return_iterator=False, rank=0, size=1):
         """
         Fetch quantities from this catalog.
 
@@ -66,7 +66,7 @@ class BaseGenericCatalog(object):
         filters = self._preprocess_filters(filters)
         native_filters = self._preprocess_native_filters(native_filters)
 
-        it = self._get_quantities_iter(quantities, filters, native_filters)
+        it = self._get_quantities_iter(quantities, filters, native_filters, rank, size)
 
         if return_iterator:
             return it
@@ -464,8 +464,8 @@ class BaseGenericCatalog(object):
         native_data = self._obtain_native_data_dict(native_quantities_needed, native_quantity_getter)
         return {q: self._assemble_quantity(q, native_data) for q in quantities}
 
-    def _get_quantities_iter(self, quantities, filters, native_filters):
-        for native_quantity_getter in self._iter_native_dataset(native_filters):
+    def _get_quantities_iter(self, quantities, filters, native_filters, rank, size):
+        for native_quantity_getter in self._iter_native_dataset(native_filters, rank, size):
             data = self._load_quantities(quantities.union(set(filters.variable_names)),
                                          native_quantity_getter)
             data = filters.filter(data)
@@ -497,7 +497,7 @@ class BaseGenericCatalog(object):
         """
         raise NotImplementedError
 
-    def _iter_native_dataset(self, native_filters=None):
+    def _iter_native_dataset(self, native_filters=None, rank=0, size=1):
         """
         To be implemented by subclass.
         Must be a generator.
