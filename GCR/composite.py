@@ -150,10 +150,10 @@ class CompositeSpecs(object):
     def is_valid_matching(self):
         return bool(self.matching_row_order or self.matching_by_column)
 
-    def get_data_iterator(self, native_filters=None):
+    def get_data_iterator(self, native_filters=None, rank=0, size=1):
         self.clear()
         if self.matching_partition:
-            return self.instance._iter_native_dataset(native_filters)
+            return self.instance._iter_native_dataset(native_filters, rank, size)
         return repeat(None)
 
 
@@ -290,7 +290,7 @@ class CompositeCatalog(BaseGenericCatalog):
     def _generate_native_quantity_list(self):
         return self._native_quantities
 
-    def _obtain_native_data_dict(self, native_quantities_needed, native_quantity_getter):
+    def _obtain_native_data_dict(self, native_quantities_needed, native_quantity_getter, rank=0, size=1):
         native_quantities_needed_dict = defaultdict(set)
         for identifier, quantity in native_quantities_needed:
             native_quantities_needed_dict[identifier].add(quantity)
@@ -328,7 +328,7 @@ class CompositeCatalog(BaseGenericCatalog):
             if cat.is_main or cat.matching_partition:
                 cat.cache = cat.instance._load_quantities(quantities_needed, getter)
             elif cat.cache is None:
-                cat.cache = cat.instance.get_quantities(quantities_needed)
+                cat.cache = cat.instance.get_quantities(quantities_needed, rank, size)
 
             # for main catalog or catalog has exact matching format, import data and do nothing else:
             if cat.is_main or (cat.matching_partition and cat.matching_row_order):
@@ -369,9 +369,9 @@ class CompositeCatalog(BaseGenericCatalog):
 
         return data
 
-    def _iter_native_dataset(self, native_filters=None):
+    def _iter_native_dataset(self, native_filters=None, rank=0, size=1):
         identifiers = tuple((cat.identifier for cat in self._catalogs))
-        for getters in zip(*(cat.get_data_iterator(native_filters) for cat in self._catalogs)):
+        for getters in zip(*(cat.get_data_iterator(native_filters, rank, size) for cat in self._catalogs)):
             yield dict(zip(identifiers, getters))
 
     def __getattr__(self, name):
