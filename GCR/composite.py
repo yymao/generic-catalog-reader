@@ -371,8 +371,13 @@ class CompositeCatalog(BaseGenericCatalog):
 
     def _iter_native_dataset(self, native_filters=None, rank=0, size=1):
         identifiers = tuple((cat.identifier for cat in self._catalogs))
+        count = 0
         for getters in zip(*(cat.get_data_iterator(native_filters, rank, size) for cat in self._catalogs)):
-            yield dict(zip(identifiers, getters))
+            if (count%size==rank):
+                count += 1
+                yield dict(zip(identifiers, getters))
+            else:
+                count +=1
 
     def __getattr__(self, name):
         attr_found = False
