@@ -18,14 +18,15 @@ MATCHING_FORMAT = None
 MATCHING_ORDER = tuple()
 
 def _match(index_this, index_main, sorter=None, selector=None, select_descending=False):
-    if (sorter is None) and (selector is None):
-        sorter = np.argsort(index_this)
-    elif sorter is None:
-        sorter = np.argsort(selector)
-        if select_descending:
-            sorter = sorter[::-1]
-        sorter2 = np.argsort(index_this[sorter], kind='stable')
-        sorter = sorter[sorter2]
+    if sorter is None:
+        if selector is None:
+            sorter = np.argsort(index_this)
+        else:
+            sorter = np.argsort(selector)
+            if select_descending:
+                sorter = sorter[::-1]
+            sorter2 = np.argsort(index_this[sorter], kind='stable')
+            sorter = sorter[sorter2]
     s = np.searchsorted(index_this, index_main, sorter=sorter)
     s[s >= len(sorter)] = -1
     matching_idx = sorter[s]
@@ -357,18 +358,12 @@ class CompositeCatalog(BaseGenericCatalog):
 
             if cat.matching_by_column:
 
-                if cat.non_unique_match_selector:
-                    matching_idx, not_matched_mask, cat.sorter = _match(
-                        cat.cache[cat.matching_by_column],
-                        data[(self._main.identifier, cat.matching_column_in_main)],
-                        cat.sorter, cat.cache[cat.non_unique_match_selector], cat.select_descending
-                    )
-                else:
-                    matching_idx, not_matched_mask, cat.sorter = _match(
-                        cat.cache[cat.matching_by_column],
-                        data[(self._main.identifier, cat.matching_column_in_main)],
-                        cat.sorter,
-                    )
+                selector = None if cat.non_unique_match_selector is None else cat.cache[cat.non_unique_match_selector]
+                matching_idx, not_matched_mask, cat.sorter = _match(
+                    cat.cache[cat.matching_by_column],
+                    data[(self._main.identifier, cat.matching_column_in_main)],
+                    cat.sorter, selector, cat.select_descending
+                )
 
                 for q, v in _slice_matched(
                     cat.cache,
