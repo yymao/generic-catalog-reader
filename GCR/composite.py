@@ -17,7 +17,7 @@ __all__ = ['CompositeSpecs', 'CompositeCatalog', 'MATCHING_FORMAT', 'MATCHING_OR
 MATCHING_FORMAT = None
 MATCHING_ORDER = tuple()
 
-def _match(index_this, index_main, sorter=None, selector=None, select_descending=True):
+def _match(index_this, index_main, sorter=None, selector=None, select_descending=False):
     if (sorter is None) and (selector is None):
         sorter = np.argsort(index_this)
     elif sorter is None:
@@ -29,7 +29,7 @@ def _match(index_this, index_main, sorter=None, selector=None, select_descending
     s = np.searchsorted(index_this, index_main, sorter=sorter)
     s[s >= len(sorter)] = -1
     matching_idx = sorter[s]
-    not_matched_mask = (index_this[matching_idx] != index_main) 
+    not_matched_mask = (index_this[matching_idx] != index_main)
     return matching_idx, not_matched_mask, sorter
 
 
@@ -60,7 +60,7 @@ class CompositeSpecs(object):
     non_unique_match_selector: str, optional (default: None)
         If set, this column determines the preference between non-unique 
         matches in this catalog. 
-    select_descending: bool (default:True)
+    select_descending: bool (default:False)
         Whether a set selection preference should be in descending order (largest to smallest)
     matching_column_in_main : str, optional (default: None)
         The column in the main catalog to be used to match to this catalog.
@@ -81,7 +81,7 @@ class CompositeSpecs(object):
         matching_row_order=True,
         matching_by_column=None,
         non_unique_match_selector=None,
-        select_descending=True,
+        select_descending=False,
         matching_column_in_main=None,
         overwrite_quantities=True,
         overwrite_attributes=True,
@@ -152,7 +152,7 @@ class CompositeSpecs(object):
         self.matching_by_column = None
         self.matching_column_in_main = None
 
-    def set_matching_column(self, column, column_in_main=None, same_partition=False, non_unique_match_selector=None, select_descending=True):
+    def set_matching_column(self, column, column_in_main=None, same_partition=False, non_unique_match_selector=None, select_descending=False):
         self.matching_partition = bool(same_partition)
         self.matching_row_order = False
         self.matching_by_column = column
@@ -241,7 +241,6 @@ class CompositeCatalog(BaseGenericCatalog):
                 except (TypeError, KeyError, IndexError):
                     matching_method = MATCHING_FORMAT
                 cat = CompositeSpecs(instance, identifier, matching_method=matching_method)
-             
             self._catalogs.append(cat)
 
         # check uniqueness of main catalogs
