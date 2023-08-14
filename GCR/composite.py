@@ -354,8 +354,7 @@ class CompositeCatalog(BaseGenericCatalog):
                 cat.cache = None
                 continue
 
-            # match column if needed:
-
+            # match column if needed
             if cat.matching_by_column:
                 selector = None if cat.non_unique_match_selector is None else cat.cache[cat.non_unique_match_selector]
                 matching_idx, not_matched_mask, cat.sorter = _match(
