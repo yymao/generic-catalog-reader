@@ -17,12 +17,12 @@ __all__ = ['CompositeSpecs', 'CompositeCatalog', 'MATCHING_FORMAT', 'MATCHING_OR
 MATCHING_FORMAT = None
 MATCHING_ORDER = tuple()
 
-def _match(index_this, index_main, sorter=None, secondary=None, sort_descending=True):
-    if (sorter is None) and (secondary is None):
+def _match(index_this, index_main, sorter=None, selector=None, select_descending=True):
+    if (sorter is None) and (selector is None):
         sorter = np.argsort(index_this)
     elif sorter is None:
-        sorter = np.argsort(secondary)
-        if sort_descending:
+        sorter = np.argsort(selector)
+        if select_descending:
             sorter = sorter[::-1]
         sorter2 = np.argsort(index_this[sorter], kind='stable')
         sorter = sorter[sorter2]
@@ -57,11 +57,11 @@ class CompositeSpecs(object):
     matching_by_column : str, optional (default: None)
         The column in this catalog to be used to match to the main catalog.
         If set, matching_row_order is assumed to be False.
-    secondary_sort_column: str, optional (default: None)
-        If set, the column to determine the preference between non-unique 
+    non_unique_match_selector: str, optional (default: None)
+        If set, this column determines the preference between non-unique 
         matches in this catalog. 
-    sort_descending: bool (default:True)
-        Whether a secondary sort should be performed in descending order
+    select_descending: bool (default:True)
+        Whether a set selection preference should be in descending order (largest to smallest)
     matching_column_in_main : str, optional (default: None)
         The column in the main catalog to be used to match to this catalog.
     overwrite_quantities : bool (default: True)
@@ -80,8 +80,8 @@ class CompositeSpecs(object):
         matching_partition=True,
         matching_row_order=True,
         matching_by_column=None,
-        secondary_sort_column=None,
-        sort_descending=True,
+        non_unique_match_selector=None,
+        select_descending=True,
         matching_column_in_main=None,
         overwrite_quantities=True,
         overwrite_attributes=True,
@@ -96,7 +96,7 @@ class CompositeSpecs(object):
         self.matching_row_order = bool(matching_row_order)
         self.matching_by_column = self.matching_column_in_main = None
         if matching_by_column:
-            self.set_matching_column(matching_by_column, matching_column_in_main, matching_partition, secondary_sort_column, sort_descending)
+            self.set_matching_column(matching_by_column, matching_column_in_main, matching_partition, non_unique_match_selector, select_descending)
 
         # For backward compatibility
         if "matching_method" in kwargs:
@@ -106,7 +106,7 @@ class CompositeSpecs(object):
             elif matching_method == MATCHING_ORDER or matching_method == "MATCHING_ORDER":
                 self.set_matching_order()
             else:
-                self.set_matching_column(matching_method, secondary_sort_column=secondary_sort_column, sort_descending=sort_descending)
+                self.set_matching_column(matching_method, non_unique_match_selector=non_unique_match_selector, select_descending=select_descending)
 
         self.overwrite_quantities = bool(overwrite_quantities)
         self.overwrite_attributes = bool(overwrite_attributes)
@@ -152,13 +152,13 @@ class CompositeSpecs(object):
         self.matching_by_column = None
         self.matching_column_in_main = None
 
-    def set_matching_column(self, column, column_in_main=None, same_partition=False, secondary_sort_column=None, sort_descending=True):
+    def set_matching_column(self, column, column_in_main=None, same_partition=False, non_unique_match_selector=None, select_descending=True):
         self.matching_partition = bool(same_partition)
         self.matching_row_order = False
         self.matching_by_column = column
         self.matching_column_in_main = column_in_main if column_in_main else column
-        self.secondary_sort_column = secondary_sort_column
-        self.sort_descending = sort_descending
+        self.non_unique_match_selector = non_unique_match_selector
+        self.select_descending = select_descending
 
     @property
     def is_valid_matching(self):
@@ -321,8 +321,8 @@ class CompositeCatalog(BaseGenericCatalog):
             if cat.matching_by_column:
                 native_quantities_needed_dict[cat_id].add(cat.matching_by_column)
                 native_quantities_needed_dict[self._main.identifier].add(cat.matching_column_in_main)
-                if cat.secondary_sort_column:
-                    native_quantities_needed_dict[cat_id].add(cat.secondary_sort_column)
+                if cat.non_unique_match_selector:
+                    native_quantities_needed_dict[cat_id].add(cat.non_unique_match_selector)
 
 
             # set order_matching_dummy_col if needed
@@ -358,11 +358,11 @@ class CompositeCatalog(BaseGenericCatalog):
 
             if cat.matching_by_column:
 
-                if cat.secondary_sort_column:
+                if cat.non_unique_match_selector:
                     matching_idx, not_matched_mask, cat.sorter = _match(
                         cat.cache[cat.matching_by_column],
                         data[(self._main.identifier, cat.matching_column_in_main)],
-                        cat.sorter, cat.cache[cat.secondary_sort_column], cat.sort_descending
+                        cat.sorter, cat.cache[cat.non_unique_match_selector], cat.select_descending
                     )
                 else:
                     matching_idx, not_matched_mask, cat.sorter = _match(
