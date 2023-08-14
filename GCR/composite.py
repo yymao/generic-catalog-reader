@@ -81,7 +81,7 @@ class CompositeSpecs(object):
         matching_row_order=True,
         matching_by_column=None,
         secondary_sort_column=None,
-        sort_descending=False,
+        sort_descending=True,
         matching_column_in_main=None,
         overwrite_quantities=True,
         overwrite_attributes=True,
